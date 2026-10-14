@@ -26,7 +26,7 @@ $cover = $inv['cover_image'] ? url('uploads/' . $inv['cover_image']) : '';
 <?php if ($cover && !$gate): ?><meta property="og:image" content="<?= e($cover) ?>"><?php endif; ?>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;600;700&family=Aref+Ruqaa:wght@400;700&display=swap">
 <link rel="stylesheet" href="<?= url('assets/invite.css') ?>">
-</head><body class="t-<?= e($inv['template']) ?>">
+</head><body class="t-<?= e($inv['template']) ?><?= $gate ? '' : ' locked' ?>">
 <?php if ($gate): ?>
 <section class="hero"><div class="hero-in"><p class="kicker">دعوة خاصة</p><h1><?= $names ?></h1>
 <form method="post" class="gate"><?= csrf_field() ?><?php if ($m = flash()): ?><p class="flash"><?= e($m) ?></p><?php endif; ?>
@@ -46,12 +46,19 @@ $ar = fn($ts) => (function($ts){
     return [$days[(int)date('w', $ts)] . ' ' . date('j', $ts) . ' ' . $mon[(int)date('n', $ts)] . ' ' . date('Y', $ts), $h . ':' . date('i', $ts) . ' ' . $ap];
 })($ts);
 ?>
+<noscript><style>.intro{display:none!important}body.locked{overflow:auto!important}body.locked .hero-in>*{opacity:1!important}.gal-g img{opacity:1!important;transform:none!important}</style></noscript>
+<div class="progress" id="prog"></div><div class="fx" id="fx" aria-hidden="true"></div>
+<div class="intro" id="intro" role="button" tabindex="0" aria-label="افتح الدعوة">
+  <div class="env"><div class="flap"></div><div class="seal">♡</div></div>
+  <p class="in-names"><?= $names ?></p><p class="in-hint">اضغط لفتح الدعوة</p>
+</div>
 <section class="hero" <?= $cover ? 'style="--cover:url(' . e($cover) . ')"' : '' ?>><div class="hero-in">
 <?php if ($guest): ?><p class="kicker">أهلًا <?= e($guest['name']) ?></p><?php else: ?><p class="kicker">نتشرف بدعوتكم</p><?php endif; ?>
 <h1><span><?= e($inv['groom']) ?></span><i>&amp;</i><span><?= e($inv['bride']) ?></span></h1>
 <?php if ($inv['message']): ?><p class="msg"><?= nl2br(e($inv['message'])) ?></p><?php endif; ?>
 <?php if ($next): [$d] = $ar(strtotime($next['event_at'])); ?><p class="date"><?= e($d) ?></p><?php endif; ?>
-<a href="#events" class="btn-i">التفاصيل</a></div></section>
+<a href="#events" class="btn-i shine">التفاصيل</a>
+<span class="cue" aria-hidden="true">⌄</span></div></section>
 
 <?php if ($next): ?><section class="count"><div id="cd" data-ts="<?= (int)(new DateTime($next['event_at'], new DateTimeZone('Africa/Cairo')))->getTimestamp() ?>">
 <div><b id="cd-d">0</b><small>يوم</small></div><div><b id="cd-h">0</b><small>ساعة</small></div><div><b id="cd-m">0</b><small>دقيقة</small></div><div><b id="cd-s">0</b><small>ثانية</small></div></div></section><?php endif; ?>
