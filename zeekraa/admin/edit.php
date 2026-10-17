@@ -1,7 +1,7 @@
 <?php
 require __DIR__ . '/../lib/bootstrap.php'; require __DIR__ . '/../lib/admin_layout.php'; require __DIR__ . '/../lib/upload.php'; require_admin();
-const TEMPLATES = ['royal' => 'رويال (كريمي وذهبي)', 'emerald' => 'زمردي (أخضر وذهبي)', 'minimal' => 'مينيمال (أبيض وأسود)'];
-const RESERVED = ['admin', 'install', 'uploads', 'assets', 'lib', 'rsvp', 'ics'];
+require __DIR__ . '/../lib/themes.php';
+const RESERVED = ['admin', 'install', 'uploads', 'assets', 'lib', 'rsvp', 'ics', 'panel'];
 $id = (int)($_GET['id'] ?? 0);
 $inv = $id ? q('SELECT * FROM invitations WHERE id=?', [$id])->fetch() : null;
 if ($id && !$inv) { http_response_code(404); exit('مش موجودة'); }
@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
     $slug = strtolower(trim($_POST['slug'] ?? ''));
     $groom = trim($_POST['groom'] ?? ''); $bride = trim($_POST['bride'] ?? '');
-    $tpl = array_key_exists($_POST['template'] ?? '', TEMPLATES) ? $_POST['template'] : 'royal';
+    $tpl = array_key_exists($_POST['template'] ?? '', THEMES) ? $_POST['template'] : 'royal';
     $evs = [];
     foreach ($_POST['ev_title'] ?? [] as $i => $t) {
         $at = str_replace('T', ' ', trim($_POST['ev_at'][$i] ?? ''));
@@ -24,6 +24,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     elseif ($groom === '' || $bride === '') $err = 'اسم العريس والعروسة مطلوبين.';
     elseif (!$evs) $err = 'ضيف مناسبة واحدة على الأقل (عنوان + ميعاد).';
     elseif (q('SELECT id FROM invitations WHERE slug=? AND id<>?', [$slug, $id])->fetch()) $err = 'الرابط ده مستخدم قبل كده.';
+    $ownerEmail = strtolower(trim($_POST['owner_email'] ?? ''));
+    if (!$err && $ownerEmail !== '' && !filter_var($ownerEmail, FILTER_VALIDATE_EMAIL)) $err = 'إيميل العميل غير صحيح.';
+    if (!$err && $ownerEmail !== '' && q('SELECT id FROM invitations WHERE owner_email=? AND id<>?', [$ownerEmail, $id])->fetch()) $err = 'إيميل العميل مستخدم في دعوة تانية.';
+    $ownerPw = $_POST['owner_password'] ?? '';
+    if (!$err && $ownerPw !== '' && strlen($ownerPw) < 6) $err = 'كلمة سر لوحة العميل لازم 6 حروف على الأقل.';
+    if (!$err && $ownerEmail !== '' && $ownerPw === '' && empty($inv['owner_password'])) $err = 'حدد كلمة سر للوحة العميل (اضغط توليد).';
+    $accent = (!empty($_POST['use_accent']) && preg_match('/^#[0-9a-fA-F]{6}$/', $_POST['accent_color'] ?? '')) ? strtolower($_POST['accent_color']) : null;
     if (!$err) {
         $pdo = db(); $pdo->beginTransaction();
         try {
@@ -34,9 +41,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!empty($_FILES['cover']['name']) && ($n = save_image($_FILES['cover']))) { delete_upload($cover); $cover = $n; }
             foreach ((array)($_POST['remove_img'] ?? []) as $r) { if (($k = array_search($r, $gallery, true)) !== false) { delete_upload($r); unset($gallery[$k]); } }
             foreach (reorder_files($_FILES['gallery'] ?? []) as $f) if ($f['name'] && count($gallery) < 12 && ($n = save_image($f))) $gallery[] = $n;
-            $vals = [$slug, $tpl, $groom, $bride, trim($_POST['message'] ?? ''), safe_url($_POST['music_url'] ?? ''), $cover, json_encode(array_values($gallery)), $accessHash, empty($_POST['is_active']) ? 0 : 1];
-            if ($inv) { q('UPDATE invitations SET slug=?,template=?,groom=?,bride=?,message=?,music_url=?,cover_image=?,gallery=?,access_password=?,is_active=? WHERE id=?', [...$vals, $id]); }
-            else { q('INSERT INTO invitations (slug,template,groom,bride,message,music_url,cover_image,gallery,access_password,is_active) VALUES (?,?,?,?,?,?,?,?,?,?)', $vals); $id = (int)$pdo->lastInsertId(); }
+            $vals = [$slug, $tpl, $groom, $bride, trim($_POST['message'] ?? ''), safe_url($_POST['music_url'] ?? ''), $cover, json_encode(array_values($gallery)), $accessHash, empty($_POST['is_active']) ? 0 : 1, $accent, $ownerEmail ?: null,
+                $ownerEmail === '' ? null : ($ownerPw !== '' ? password_hash($ownerPw, PASSWORD_DEFAULT) : ($inv['owner_password'] ?? null))];
+            if ($inv) { q('UPDATE invitations SET slug=?,template=?,groom=?,bride=?,message=?,music_url=?,cover_image=?,gallery=?,access_password=?,is_active=?,accent_color=?,owner_email=?,owner_password=? WHERE id=?', [...$vals, $id]); }
+            else { q('INSERT INTO invitations (slug,template,groom,bride,message,music_url,cover_image,gallery,access_password,is_active,accent_color,owner_email,owner_password) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)', $vals); $id = (int)$pdo->lastInsertId(); }
             q('DELETE FROM events WHERE invitation_id=?', [$id]);
             foreach ($evs as $o => $ev) q('INSERT INTO events (invitation_id,title,event_at,venue,address,map_url,sort_order) VALUES (?,?,?,?,?,?,?)', [$id, $ev[0], $ev[1], $ev[2], $ev[3], $ev[4], $o]);
             $pdo->commit();
@@ -54,7 +62,7 @@ admin_header($id ? 'تعديل دعوة' : 'دعوة جديدة'); ?>
 <label>اسم العريس <input name="groom" value="<?= $v('groom') ?>" required></label>
 <label>اسم العروسة <input name="bride" value="<?= $v('bride') ?>" required></label>
 <label>رابط الدعوة (إنجليزي) — <?= e(url('')) ?><b>ahmed-sara</b><input name="slug" value="<?= $v('slug') ?>" pattern="[a-z0-9-]{3,60}" required></label>
-<label>التصميم <select name="template"><?php foreach (TEMPLATES as $k => $l): ?><option value="<?= $k ?>" <?= ($inv['template'] ?? 'royal') === $k ? 'selected' : '' ?>><?= e($l) ?></option><?php endforeach; ?></select></label>
+<label>التصميم <select name="template"><?php foreach (THEMES as $k => $l): ?><option value="<?= $k ?>" <?= ($inv['template'] ?? 'royal') === $k ? 'selected' : '' ?>><?= e($l) ?></option><?php endforeach; ?></select></label>
 </div>
 <label>كلمة الدعوة / رسالة ترحيب <textarea name="message" rows="3"><?= $v('message', 'يتشرف أهل العروسين بدعوتكم لحضور حفل زفافهما') ?></textarea></label>
 <h3>المناسبات (كتب كتاب / حنة / فرح…)</h3>
@@ -75,6 +83,15 @@ admin_header($id ? 'تعديل دعوة' : 'دعوة جديدة'); ?>
 <?php if (!empty($inv['cover_image'])): ?><div class="thumbs"><img src="<?= url('uploads/' . $inv['cover_image']) ?>" alt=""></div><?php endif; ?>
 <label>معرض الصور (لحد 12) <input type="file" name="gallery[]" multiple accept="image/jpeg,image/png,image/webp"></label>
 <div class="thumbs"><?php foreach ($gallery as $g): ?><label style="display:inline-block"><img src="<?= url('uploads/' . $g) ?>" alt=""><br><input type="checkbox" name="remove_img[]" value="<?= e($g) ?>" style="display:inline;width:auto"> حذف</label><?php endforeach; ?></div>
+<h3>لون الدعوة</h3>
+<div class="grid"><label>اللون المخصص (بيغلب لون التصميم)
+<input type="color" name="accent_color" value="<?= e($inv['accent_color'] ?? '#b08a3e') ?>" style="height:44px;padding:3px"></label>
+<label>&nbsp;<span><input type="checkbox" name="use_accent" value="1" style="display:inline;width:auto" <?= !empty($inv['accent_color']) ? 'checked' : '' ?>> استخدم اللون المخصص</span></label></div>
+<h3>لوحة العميل (العروسين)</h3>
+<p class="muted">العروسين يدخلوا من <b><?= e(url('panel/')) ?></b> ويشوفوا اللي سجّل حضوره ويديروا ضيوفهم.</p>
+<div class="grid"><label>إيميل العميل <input type="email" name="owner_email" value="<?= $v('owner_email') ?>" autocomplete="off"></label>
+<label>كلمة سر اللوحة <input name="owner_password" id="opw" autocomplete="off" placeholder="<?= !empty($inv['owner_password']) ? 'محفوظة — اكتب جديدة للتغيير' : '6 حروف على الأقل' ?>">
+<button type="button" class="btn sm sec" style="margin-top:6px" onclick="document.getElementById('opw').value=Math.random().toString(36).slice(2,6)+Math.random().toString(36).slice(2,6)">توليد كلمة سر</button></label></div>
 <h3>الخصوصية</h3>
 <div class="grid">
 <label>كلمة سر للدعوة (اختياري) <input name="access_password" type="password" autocomplete="new-password" placeholder="<?= !empty($inv['access_password']) ? 'محفوظة — اكتب جديدة للتغيير' : '' ?>"></label>

@@ -19,6 +19,7 @@ admin_header('الدعوات'); ?>
 <td style="white-space:nowrap"><a class="btn sm sec" href="<?= url('admin/edit.php?id=' . $r['id']) ?>">تعديل</a>
 <a class="btn sm sec" href="<?= url('admin/guests.php?id=' . $r['id']) ?>">الضيوف</a>
 <a class="btn sm sec" href="<?= url('admin/rsvps.php?id=' . $r['id']) ?>">الردود</a>
+<?= $r['owner_email'] ? '<small class="muted" title="لوحة العميل">👤 ' . e($r['owner_email']) . '</small>' : '' ?>
 <form method="post" style="display:inline" onsubmit="return confirm('حذف الدعوة نهائيًا؟')"><?= csrf_field() ?><button class="btn sm danger" name="delete" value="<?= $r['id'] ?>">حذف</button></form></td>
 </tr><?php endforeach; ?></table><?php endif; ?></div>
 <?php admin_footer();

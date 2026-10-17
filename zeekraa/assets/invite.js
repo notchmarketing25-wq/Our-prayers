@@ -41,10 +41,12 @@
   document.querySelectorAll('.gal-g img').forEach(function(el,i){el.style.setProperty('--d',(i*.07)+'s')});
 
   // شريط التقدم + بارالاكس خفيف للهيرو
-  var prog=$('prog'),hero=document.querySelector('.hero-in'),tk=false;
-  function onScroll(){tk=false;var h=document.documentElement,sc=h.scrollTop||body.scrollTop,max=h.scrollHeight-h.clientHeight;
+  var prog=$('prog'),hero=$('photoImg')?null:document.querySelector('.hero-in'),tk=false;
+  var onScroll=function(){tk=false;var h=document.documentElement,sc=h.scrollTop||body.scrollTop,max=h.scrollHeight-h.clientHeight;
     if(prog)prog.style.transform='scaleX('+(max>0?sc/max:0)+')';
     if(hero&&!reduce&&sc<innerHeight){hero.style.transform='translateY('+sc*.25+'px)';hero.style.opacity=Math.max(0,1-sc/(innerHeight*.9))}}
+  var ph=$('photoImg');
+  var _on=onScroll;onScroll=function(){_on();var sc=document.documentElement.scrollTop;if(ph&&!reduce&&sc<innerHeight*1.2)ph.style.translate='0 '+Math.min(40,sc*.08)+'px'};
   addEventListener('scroll',function(){if(!tk){tk=true;requestAnimationFrame(onScroll)}},{passive:true});
 
   // كونفيتي لما الضيف يأكد حضوره
@@ -54,5 +56,26 @@
     for(var i=0;i<70;i++){var c=document.createElement('i');c.className='cf';
       c.style.cssText='left:'+Math.random()*100+'%;background:'+cols[i%cols.length]+';--x:'+(Math.random()*240-120)+'px;--r:'+(Math.random()*900)+'deg;animation-delay:'+Math.random()*.8+'s;animation-duration:'+(2+Math.random()*1.5)+'s';
       document.body.appendChild(c);setTimeout(function(n){n.remove()}.bind(null,c),5000);}
+  }
+
+  // ميلان 3D خفيف لكروت المناسبات (للماوس بس)
+  if(!reduce&&matchMedia('(hover:hover)').matches){
+    document.querySelectorAll('.ev').forEach(function(c){
+      c.addEventListener('pointermove',function(e){var r=c.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;
+        c.classList.add('tilt');c.style.transform='perspective(700px) rotateY('+x*8+'deg) rotateX('+-y*8+'deg) translateY(-4px)'});
+      c.addEventListener('pointerleave',function(){c.classList.remove('tilt');c.style.transform=''});});
+  }
+
+  // عرض الصور بحجم كبير مع تنقل بالأسهم/السحب
+  var lb=$('lb'),lbi=$('lbImg'),imgs=[].slice.call(document.querySelectorAll('.gal-g img')),cur=0;
+  function show(i){cur=(i+imgs.length)%imgs.length;lbi.src=imgs[cur].src;lb.hidden=false;body.style.overflow='hidden'}
+  function hide(){lb.hidden=true;body.style.overflow=''}
+  if(lb&&imgs.length){
+    imgs.forEach(function(im,i){im.onclick=function(){show(i)};im.onkeydown=function(e){if(e.key==='Enter')show(i)}});
+    $('lbX').onclick=hide;$('lbN').onclick=function(){show(cur+1)};$('lbP').onclick=function(){show(cur-1)};
+    lb.onclick=function(e){if(e.target===lb)hide()};
+    addEventListener('keydown',function(e){if(lb.hidden)return;if(e.key==='Escape')hide();if(e.key==='ArrowLeft')show(cur+1);if(e.key==='ArrowRight')show(cur-1)});
+    var sx=0;lb.addEventListener('touchstart',function(e){sx=e.touches[0].clientX},{passive:true});
+    lb.addEventListener('touchend',function(e){var d=e.changedTouches[0].clientX-sx;if(Math.abs(d)>50)show(cur+(d<0?1:-1))});
   }
 })();

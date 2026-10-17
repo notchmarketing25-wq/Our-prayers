@@ -1,5 +1,5 @@
 <?php
-require __DIR__ . '/../lib/bootstrap.php';
+require __DIR__ . '/../lib/bootstrap.php'; require __DIR__ . '/../lib/migrate.php'; ensure_schema();
 $err = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();

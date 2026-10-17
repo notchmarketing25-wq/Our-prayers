@@ -15,6 +15,9 @@ CREATE TABLE IF NOT EXISTS invitations (
   cover_image VARCHAR(255) NULL,
   gallery TEXT NULL,
   access_password VARCHAR(255) NULL,
+  accent_color CHAR(7) NULL,
+  owner_email VARCHAR(190) NULL UNIQUE,
+  owner_password VARCHAR(255) NULL,
   is_active TINYINT(1) NOT NULL DEFAULT 1,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

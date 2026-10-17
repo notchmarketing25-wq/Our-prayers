@@ -1,16 +1,17 @@
 *{box-sizing:border-box}
 .t-royal{--bg:#f7f1e6;--ink:#3a2f20;--accent:#b08a3e;--card:#fffaf0;--hero:#efe3c8;--on:#fff}
 .t-emerald{--bg:#10261d;--ink:#f1e6c9;--accent:#d4b26a;--card:#183629;--hero:#1c4130;--on:#10261d}
+.t-rose{--bg:#fdf3f3;--ink:#4a2c32;--accent:#c27a84;--card:#fff;--hero:#f8dfe0;--on:#fff}
+.t-navy{--bg:#0d1b2e;--ink:#eae6da;--accent:#d6b25e;--card:#14283f;--hero:#12243a;--on:#0d1b2e}
+.t-lavender{--bg:#f5f1fb;--ink:#3a3050;--accent:#8b6fc0;--card:#fff;--hero:#e8def6;--on:#fff}
+.t-sage{--bg:#f2f4ec;--ink:#2f3a2c;--accent:#6b8a5a;--card:#fff;--hero:#e0e8d3;--on:#fff}
+.t-burgundy{--bg:#2a0f16;--ink:#f6e6df;--accent:#e0b07a;--card:#3a1822;--hero:#3a1822;--on:#2a0f16}
 .t-minimal{--bg:#fff;--ink:#111;--accent:#111;--card:#f4f4f4;--hero:#fff;--on:#fff}
+html,body{overflow-x:clip}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:Cairo,Tahoma,sans-serif;line-height:1.8}
 h1,h2,h3{font-family:Amiri,'Aref Ruqaa',serif;font-weight:700;margin:0}
 .t-minimal h1,.t-minimal h2,.t-minimal h3{font-family:Cairo,sans-serif}
-.hero{min-height:100svh;display:flex;align-items:center;justify-content:center;text-align:center;padding:32px 20px;
- background:linear-gradient(#0000,#0000),var(--cover,none) center/cover,var(--hero)}
-.hero:has(.hero-in):not([style*="cover"]){background:var(--hero)}
-.hero[style*="cover"]::before{content:"";position:absolute;inset:0}
-.hero{position:relative}.hero-in{position:relative;width:100%;max-width:640px;min-width:0}
-.hero[style*="cover"] .hero-in{background:color-mix(in srgb,var(--bg) 82%,transparent);padding:32px 22px;border-radius:20px;backdrop-filter:blur(4px)}
+.hero{position:relative;min-height:100svh;display:flex;align-items:center;justify-content:center;text-align:center;padding:32px 20px;background:var(--hero)}.hero-in{position:relative;width:100%;max-width:640px;min-width:0}
 .kicker{letter-spacing:.08em;color:var(--accent);margin:0 0 8px}
 h1{font-size:clamp(2.6rem,10vw,4.6rem);line-height:1.2;display:flex;flex-direction:column;align-items:center}
 h1 i{font-style:normal;color:var(--accent);font-size:.6em}
@@ -54,8 +55,6 @@ body.locked{overflow:hidden}
 
 /* دخول الهيرو متتابع (بيبدأ بعد فتح الظرف) */
 .hero{overflow:hidden}
-.hero[style*="cover"]{background-attachment:scroll;animation:kb 18s ease-in-out infinite alternate}
-@keyframes kb{from{background-size:100%}to{background-size:116%}}
 body.locked .hero-in>*{opacity:0}
 body.go .hero-in>*{animation:up .9s cubic-bezier(.2,.7,.2,1) both}
 body.go .hero-in>:nth-child(1){animation-delay:.1s}body.go .hero-in>:nth-child(2){animation-delay:.3s}
@@ -98,3 +97,40 @@ h2{position:relative;display:inline-block}h2::after{content:"";display:block;hei
  *,*::before,*::after{animation:none!important;transition:none!important}
  .hero-in>*,.rv,.gal-g img{opacity:1!important;transform:none!important}.intro{display:none}body.locked{overflow:auto}.fx{display:none}
 }
+
+/* ===== صورة الغلاف: ظاهرة بالكامل والكتابة تحتها ===== */
+.photo{position:relative;height:84svh;min-height:420px;max-height:960px;overflow:hidden;background:var(--hero)}
+.photo-frame{position:absolute;inset:0;clip-path:inset(0 0 100% 0);-webkit-mask-image:linear-gradient(#000 88%,transparent);mask-image:linear-gradient(#000 88%,transparent)}
+body.go .photo-frame{animation:wipe 1.5s cubic-bezier(.7,0,.2,1) forwards}
+@keyframes wipe{to{clip-path:inset(0)}}
+.photo-img{width:100%;height:100%;object-fit:cover;object-position:50% 28%;transform:scale(1.12);animation:zoom 22s ease-in-out infinite alternate;will-change:transform}
+@keyframes zoom{to{transform:scale(1.02)}}
+.photo .cue{position:absolute;bottom:14px;inset-inline:0;text-align:center;margin:0;z-index:2;text-shadow:0 2px 10px #0006}
+.hero.below{min-height:auto;background:var(--bg);padding:8px 20px 56px}
+.hero.below .hero-in::before{display:none}
+.t-minimal .hero.below{background:#fff}
+/* اسماء بتدرج لوني متحرك */
+h1 span{background:linear-gradient(100deg,var(--ink) 30%,var(--accent) 50%,var(--ink) 70%);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation-name:sheen;animation-duration:6s;animation-iteration-count:infinite}
+body.go h1 span:first-child{animation:fromR 1.2s .3s both,sheen 7s 2s linear infinite}body.go h1 span:last-child{animation:fromL 1.2s .5s both,sheen 7s 2.4s linear infinite}
+@keyframes sheen{to{background-position:-250% 0}}
+/* زخرفة بترسم نفسها */
+.orn{width:180px;height:18px;margin:6px auto;display:block;fill:none;stroke:var(--accent);stroke-width:1.4;stroke-linecap:round}
+.orn path,.orn circle{stroke-dasharray:130;stroke-dashoffset:130}.orn circle{fill:var(--accent)}
+body.go .orn path,body.go .orn circle{animation:draw 2s 1s forwards}@keyframes draw{to{stroke-dashoffset:0}}
+/* كروت المناسبات: ميلان 3D مع الماوس + خط جانبي */
+.ev{position:relative;transform-style:preserve-3d;will-change:transform}.ev::before{content:"";position:absolute;inset-block:18px;inset-inline-start:0;width:3px;border-radius:3px;background:var(--accent);transform:scaleY(0);transition:transform .8s .3s}.ev.in::before{transform:scaleY(1)}
+.ev.tilt{transition:transform .08s linear!important}
+/* المعرض + عرض الصورة */
+.gal-g{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));grid-auto-flow:dense}
+.gal-g img:first-child{grid-column:span 2;grid-row:span 2;aspect-ratio:auto;height:100%}
+.gal-g img{cursor:zoom-in;clip-path:inset(0 0 100% 0);transition:.9s cubic-bezier(.2,.7,.2,1)}
+.gal.in .gal-g img{clip-path:inset(0)}
+.lb{position:fixed;inset:0;z-index:200;background:#000e;display:flex;align-items:center;justify-content:center;animation:lbin .3s}
+.lb[hidden]{display:none}@keyframes lbin{from{opacity:0}}
+.lb img{max-width:94vw;max-height:88vh;border-radius:10px;box-shadow:0 20px 60px #000a;animation:lbz .35s}@keyframes lbz{from{transform:scale(.9);opacity:0}}
+.lb button{position:absolute;background:#fff2;color:#fff;border:0;width:46px;height:46px;border-radius:50%;font-size:22px;cursor:pointer;backdrop-filter:blur(6px)}
+.lb-x{top:16px;inset-inline-end:16px}.lb-n{left:12px;top:50%}.lb-p{right:12px;top:50%}
+/* الرسوم الهادية: العنوان الرئيسي */
+.t-royal .hero-in::before,.t-rose .hero-in::before,.t-lavender .hero-in::before,.t-sage .hero-in::before{opacity:.5}
+@media(min-width:900px){.photo{height:88svh}.gal-g{grid-template-columns:repeat(4,1fr)}}
+@media(prefers-reduced-motion:reduce){.photo-frame{clip-path:none!important}.photo-img{transform:none}.orn path,.orn circle{stroke-dashoffset:0}.gal-g img{clip-path:none!important}h1 span{animation:none!important}}
