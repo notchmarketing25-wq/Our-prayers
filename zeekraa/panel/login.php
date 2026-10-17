@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ?><!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>لوحة العروسين — <?= e(cfg('site_name')) ?></title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@700&family=Cairo:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="<?= url('assets/panel.css') ?>"></head>
+<link rel="stylesheet" href="<?= asset('assets/panel.css') ?>"></head>
 <body class="login"><div class="blob b1"></div><div class="blob b2"></div>
 <main class="login-card"><div class="logo">♡</div><h1>أهلًا بيكم</h1><p class="sub">ادخلوا لوحتكم وشوفوا مين رد على دعوتكم</p>
 <?php if ($err): ?><div class="alert"><?= e($err) ?></div><?php endif; ?>

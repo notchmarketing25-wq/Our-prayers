@@ -11,6 +11,8 @@ session_start();
 
 function cfg(string $k, $d = null) { global $CONFIG; return $CONFIG[$k] ?? $d; }
 function url(string $path = ''): string { return rtrim(cfg('base_url', ''), '/') . '/' . ltrim($path, '/'); }
+/** رابط ملف ثابت مع رقم نسخة (وقت التعديل) عشان الكاش ما يعرضش ملف قديم */
+function asset(string $p): string { return url($p) . '?v=' . (@filemtime(APP_ROOT . '/' . $p) ?: 1); }
 function e($v): string { return htmlspecialchars((string)$v, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); }
 function redirect(string $to): void { header('Location: ' . $to); exit; }
 

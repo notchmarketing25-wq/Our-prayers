@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?><!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>دخول</title>
-<link rel="stylesheet" href="<?= url('assets/admin.css') ?>"></head><body class="auth"><main class="card">
+<link rel="stylesheet" href="<?= asset('assets/admin.css') ?>"></head><body class="auth"><main class="card">
 <h1>دخول الأدمن</h1>
 <?php if (isset($_GET['installed'])): ?><div class="ok-msg">تم التثبيت ✓ سجّل دخول. ولأمان أكتر امسح فولدر <code>install</code>.</div><?php endif; ?>
 <?php if ($err): ?><div class="alert"><?= e($err) ?></div><?php endif; ?>

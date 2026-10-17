@@ -43,7 +43,7 @@ $ago = function (string $t) { $d = time() - strtotime($t);
 ?><!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow"><title>لوحة <?= e($inv['groom'] . ' & ' . $inv['bride']) ?></title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@700&family=Cairo:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="<?= url('assets/panel.css') ?>"></head>
+<link rel="stylesheet" href="<?= asset('assets/panel.css') ?>"></head>
 <body style="--accent:<?= e($accent) ?>;--on:<?= e($on) ?>">
 <header class="top"><div class="wrap bar"><div class="brand"><span class="heart">♡</span><div><b><?= e($inv['groom']) ?> & <?= e($inv['bride']) ?></b><small>لوحة المدعوين</small></div></div>
 <nav><a class="pill ghost" target="_blank" href="<?= e($link) ?>">شوف الدعوة ↗</a><a class="pill ghost" href="<?= url('panel/logout.php') ?>">خروج</a></nav></div></header>
@@ -97,4 +97,4 @@ $ago = function (string $t) { $d = time() - strtotime($t);
 <?php endforeach; if (!$guests): ?><div class="empty"><div>👥</div><p>ضيفوا المدعوين هنا عشان كل واحد ياخد لينك باسمه وتعرفوا مين ماردّش.</p></div><?php endif; ?>
 </div></section>
 </main>
-<script src="<?= url('assets/panel.js') ?>"></script></body></html>
+<script src="<?= asset('assets/panel.js') ?>"></script></body></html>

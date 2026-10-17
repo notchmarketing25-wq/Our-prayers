@@ -1,4 +1,5 @@
 (function(){
+  window.__inviteReady=true;
   var $=function(i){return document.getElementById(i)},body=document.body,
       reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
   var a=$('bg'),b=$('mus'),intro=$('intro');

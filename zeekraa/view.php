@@ -26,7 +26,7 @@ $cover = $inv['cover_image'] ? url('uploads/' . $inv['cover_image']) : '';
 <meta property="og:description" content="<?= e(mb_substr($gate ? 'دعوة خاصة' : (string)$inv['message'], 0, 150)) ?>">
 <?php if ($cover && !$gate): ?><meta property="og:image" content="<?= e($cover) ?>"><?php endif; ?>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;600;700&family=Aref+Ruqaa:wght@400;700&display=swap">
-<link rel="stylesheet" href="<?= url('assets/invite.css') ?>">
+<link rel="stylesheet" href="<?= asset('assets/invite.css') ?>">
 </head><body class="t-<?= e($inv['template']) ?><?= $gate ? '' : ' locked' ?>"<?= $bodyStyle ?>>
 <?php if ($gate): ?>
 <section class="hero"><div class="hero-in"><p class="kicker">دعوة خاصة</p><h1><?= $names ?></h1>
@@ -53,6 +53,12 @@ $ar = fn($ts) => (function($ts){
   <div class="env"><div class="flap"></div><div class="seal">♡</div></div>
   <p class="in-names"><?= $names ?></p><p class="in-hint">اضغط لفتح الدعوة</p>
 </div>
+<script>/* احتياطي: يفتح الظرف حتى لو ملف invite.js ماتحملش */
+(function(){var i=document.getElementById('intro'),b=document.body;if(!i)return;
+function o(){if(i.className.indexOf('open')>-1)return;i.className+=' open';b.classList.remove('locked');b.classList.add('go');
+ var a=document.getElementById('bg');try{a&&a.play&&a.play()}catch(e){}}
+i.onclick=o;i.onkeydown=function(e){if(e.key==='Enter'||e.key===' ')o()};
+setTimeout(function(){if(i.className.indexOf('open')<0&&!window.__inviteReady){i.style.opacity='.0';i.style.pointerEvents='none';b.classList.remove('locked');b.classList.add('go')}},9000)})();</script>
 <?php if ($cover): ?>
 <header class="photo" id="photo"><div class="photo-frame"><img class="photo-img" id="photoImg" src="<?= e($cover) ?>" alt="<?= $names ?>" fetchpriority="high"></div>
 <span class="cue" aria-hidden="true">⌄</span></header>
@@ -93,5 +99,5 @@ $ar = fn($ts) => (function($ts){
 <div class="lb" id="lb" hidden><button class="lb-x" id="lbX" aria-label="إغلاق">✕</button><button class="lb-n" id="lbN" aria-label="التالي">‹</button><img id="lbImg" alt=""><button class="lb-p" id="lbP" aria-label="السابق">›</button></div>
 <footer><p><?= $names ?></p><p class="credit">اعمل دعوتك من <a href="<?= e(url()) ?>"><?= e(cfg('site_name')) ?></a></p></footer>
 <?php if ($safe = safe_url($inv['music_url'])): ?><audio id="bg" src="<?= e($safe) ?>" loop preload="none"></audio><button id="mus" class="mus" aria-label="موسيقى">♪</button><?php endif; ?>
-<script src="<?= url('assets/invite.js') ?>"></script>
+<script src="<?= asset('assets/invite.js') ?>"></script>
 </body></html>
