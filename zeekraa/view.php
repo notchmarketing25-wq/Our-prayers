@@ -16,7 +16,7 @@ if ($inv['access_password']) {
     $gate = empty($_SESSION['unlocked'][$inv['id']]);
 }
 $names = e($inv['groom'] . ' & ' . $inv['bride']);
-$bodyStyle = $inv['accent_color'] ? ' style="--accent:' . e($inv['accent_color']) . ';--on:' . contrast_on($inv['accent_color']) . '"' : '';
+$bodyStyle = !empty($inv['accent_color']) ? ' style="--accent:' . e($inv['accent_color']) . ';--on:' . contrast_on($inv['accent_color']) . '"' : '';
 $cover = $inv['cover_image'] ? url('uploads/' . $inv['cover_image']) : '';
 ?><!doctype html>
 <html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">

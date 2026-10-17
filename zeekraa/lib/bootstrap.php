@@ -37,7 +37,11 @@ function flash(?string $msg = null) {
     if ($msg !== null) { $_SESSION['flash'] = $msg; return; }
     $m = $_SESSION['flash'] ?? null; unset($_SESSION['flash']); return $m;
 }
-function require_admin(): void { if (empty($_SESSION['admin'])) redirect(url('admin/login.php')); }
+function require_admin(): void {
+    if (empty($_SESSION['admin'])) redirect(url('admin/login.php'));
+    require_once APP_ROOT . '/lib/migrate.php';
+    ensure_schema(); // يرقّي القاعدة تلقائيًا لو فيها أعمدة ناقصة (حتى لو الجلسة قديمة)
+}
 
 function normalize_phone_eg(string $p): string {
     $d = preg_replace('/\D+/', '', $p);
