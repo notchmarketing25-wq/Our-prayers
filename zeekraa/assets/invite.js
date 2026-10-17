@@ -66,7 +66,7 @@
 
   // كونفيتي لما الضيف يأكد حضوره
   var fl=document.querySelector('.rsvp .flash');
-  if(fl&&/تم تأكيد/.test(fl.textContent)&&!reduce){
+  if(fl&&fl.dataset.ok&&!reduce){
     var cols=['#d4b26a','#b08a3e','#f1e6c9','#e8a0a0','#fff'];
     for(var i=0;i<70;i++){var c=document.createElement('i');c.className='cf';
       c.style.cssText='left:'+Math.random()*100+'%;background:'+cols[i%cols.length]+';--x:'+(Math.random()*240-120)+'px;--r:'+(Math.random()*900)+'deg;animation-delay:'+Math.random()*.8+'s;animation-duration:'+(2+Math.random()*1.5)+'s';

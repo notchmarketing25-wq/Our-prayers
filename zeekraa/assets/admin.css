@@ -14,3 +14,11 @@ table{width:100%;border-collapse:collapse}th,td{padding:8px;text-align:start;bor
 .checks{list-style:none;padding:0}.checks .ok{color:#1d7a3a}.checks .bad{color:#b32}
 .event-row{border:1px dashed #cbbf9f;border-radius:8px;padding:10px;margin:8px 0}
 .thumbs img{height:60px;border-radius:6px;margin:2px}
+
+.presets{display:flex;flex-wrap:wrap;gap:10px;margin:6px 0 12px}
+.preset{margin:0;cursor:pointer;text-align:center;font-weight:400}.preset input{position:absolute;opacity:0;width:0;height:0}
+.preset .pv{display:block;width:78px;height:98px;border-radius:10px;background:#eee center/cover;border:3px solid transparent;box-shadow:0 1px 6px #0002;transition:.2s}
+.preset .pv.none{display:grid;place-items:center;font-size:.8rem;color:#888;background:#f4f0e6}
+.preset small{display:block;font-size:.72rem;color:#666;max-width:78px;margin:3px auto 0;line-height:1.2}
+.preset input:checked+.pv{border-color:#1f3a2e;transform:translateY(-3px);box-shadow:0 6px 14px #0003}
+.preset:hover .pv{transform:translateY(-2px)}

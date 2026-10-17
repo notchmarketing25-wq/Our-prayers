@@ -134,3 +134,14 @@ body.go .orn path,body.go .orn circle{animation:draw 2s 1s forwards}@keyframes d
 .t-royal .hero-in::before,.t-rose .hero-in::before,.t-lavender .hero-in::before,.t-sage .hero-in::before{opacity:.5}
 @media(min-width:900px){.photo{height:88svh}.gal-g{grid-template-columns:repeat(4,1fr)}}
 @media(prefers-reduced-motion:reduce){.photo-frame{clip-path:none!important}.photo-img{transform:none}.orn path,.orn circle{stroke-dashoffset:0}.gal-g img{clip-path:none!important}h1 span{animation:none!important}}
+
+/* ===== النسخة الإنجليزي (LTR) ===== */
+.l-en{font-family:Montserrat,system-ui,sans-serif;line-height:1.7}
+.l-en h1,.l-en h2,.l-en h3,.l-en .in-names{font-family:'Cormorant Garamond',Georgia,serif;font-weight:700}
+.l-en h1{letter-spacing:.01em}.l-en .kicker{letter-spacing:.22em;text-transform:uppercase;font-size:.82rem}
+.l-en .progress{transform-origin:left}
+.l-en.go h1 span:first-child{animation:fromL 1.2s .3s both,sheen 7s 2s linear infinite}.l-en.go h1 span:last-child{animation:fromR 1.2s .5s both,sheen 7s 2.4s linear infinite}
+.l-en .ev.rv:nth-of-type(odd){transform:translateX(-60px)}.l-en .ev.rv:nth-of-type(even){transform:translateX(60px)}
+.l-en .ev.rv.in{transform:none}
+.l-en .lb-n{left:auto;right:12px}.l-en .lb-p{right:auto;left:12px}
+.l-en .count small,.l-en .btn-i,.l-en .in-hint{letter-spacing:.06em}

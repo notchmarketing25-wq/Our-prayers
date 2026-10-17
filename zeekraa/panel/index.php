@@ -1,5 +1,5 @@
 <?php
-require __DIR__ . '/../lib/bootstrap.php'; require __DIR__ . '/../lib/themes.php';
+require __DIR__ . '/../lib/bootstrap.php'; require __DIR__ . '/../lib/themes.php'; require __DIR__ . '/../lib/i18n.php';
 if (empty($_SESSION['client'])) redirect(url('panel/login.php'));
 $id = (int)$_SESSION['client'];
 $inv = q('SELECT * FROM invitations WHERE id=? AND is_active=1', [$id])->fetch();
@@ -54,7 +54,7 @@ $ago = function (string $t) { $d = time() - strtotime($t);
 <section class="welcome rise"><div><h1>أهلًا يا <?= e($inv['groom']) ?> و<?= e($inv['bride']) ?> 🤍</h1>
 <p><?= $days !== null ? ($days > 0 ? 'فاضل <b class="cnt" data-n="' . $days . '">0</b> يوم على ' . e($first['title']) : 'النهاردة ' . e($first['title']) . '، مبروك! 🎉') : '' ?></p></div>
 <div class="share"><input id="lnk" readonly dir="ltr" value="<?= e($link) ?>"><button class="pill" id="copy" type="button">نسخ الرابط</button>
-<a class="pill wa" target="_blank" rel="noopener" href="https://wa.me/?text=<?= rawurlencode("يشرفنا حضورك 🤍\n{$inv['groom']} & {$inv['bride']}\n$link") ?>">واتساب</a></div></section>
+<a class="pill wa" target="_blank" rel="noopener" href="https://wa.me/?text=<?= rawurlencode(inv_lang($inv) === 'en' ? "We would be honoured by your presence 🤍\n{$inv['groom']} & {$inv['bride']}\n$link" : "يشرفنا حضورك 🤍\n{$inv['groom']} & {$inv['bride']}\n$link") ?>">واتساب</a></div></section>
 
 <section class="stats">
 <div class="stat rise" style="--i:0"><span class="ico">✉️</span><b class="cnt" data-n="<?= $nGuests ?>">0</b><small>مدعو</small></div>
@@ -85,9 +85,10 @@ $ago = function (string $t) { $d = time() - strtotime($t);
 <div class="list">
 <?php foreach ($guests as $g):
     $gl = $link . '?g=' . $g['token'];
+    $L = inv_lang($inv);
     $txt = $g['attending'] === null
-        ? "أهلًا {$g['name']} 🤍\nيشرفنا حضورك {$evTitle} {$inv['groom']} & {$inv['bride']}\nدعوتك الخاصة:\n$gl"
-        : "أهلًا {$g['name']} 🤍\nشكرًا على ردك! تقدر تعدّله من هنا:\n$gl";
+        ? tr('wa_invite', $L, $g['name'], $evTitle, $inv['groom'] . ' & ' . $inv['bride'], $gl)
+        : tr('wa_thanks', $L, $g['name'], $gl);
     $wa = 'https://wa.me/' . ($g['phone'] ? normalize_phone_eg($g['phone']) : '') . '?text=' . rawurlencode($txt); ?>
 <article class="row rise" style="--i:0"><div class="av"><?= e(mb_substr($g['name'], 0, 1)) ?></div>
 <div class="who"><b><?= e($g['name']) ?></b><small><?= e($g['phone'] ?: 'بدون رقم') ?> · لحد <?= (int)$g['max_guests'] ?> أفراد</small></div>

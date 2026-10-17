@@ -1,5 +1,5 @@
 <?php
-require __DIR__ . '/../lib/bootstrap.php'; require __DIR__ . '/../lib/admin_layout.php'; require_admin();
+require __DIR__ . '/../lib/bootstrap.php'; require __DIR__ . '/../lib/i18n.php'; require __DIR__ . '/../lib/admin_layout.php'; require_admin();
 $id = (int)($_GET['id'] ?? 0);
 $inv = q('SELECT * FROM invitations WHERE id=?', [$id])->fetch() or exit('مش موجودة');
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -27,7 +27,7 @@ admin_header('الضيوف'); ?>
 <div class="card"><table><tr><th>الضيف</th><th>الأفراد</th><th>الحالة</th><th>اللينك الخاص</th><th></th></tr>
 <?php foreach ($guests as $g):
     $link = url($inv['slug']) . '?g=' . $g['token'];
-    $text = "أهلًا {$g['name']} 🤍\nيشرفنا حضورك " . ($first['title'] ?? 'مناسبتنا') . " {$inv['groom']} & {$inv['bride']}\nدعوتك الخاصة:\n$link";
+    $text = tr('wa_invite', inv_lang($inv), $g['name'], $first['title'] ?? '', $inv['groom'] . ' & ' . $inv['bride'], $link);
     $wa = 'https://wa.me/' . ($g['phone'] ? normalize_phone_eg($g['phone']) : '') . '?text=' . rawurlencode($text); ?>
 <tr><td><?= e($g['name']) ?><br><small class="muted"><?= e($g['phone']) ?></small></td><td><?= (int)$g['max_guests'] ?></td>
 <td><?= $g['attending'] === null ? '— لم يرد' : ($g['attending'] ? '✓ حاضر (' . (int)$g['party_size'] . ')' : '✗ معتذر') ?></td>

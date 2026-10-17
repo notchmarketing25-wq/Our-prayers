@@ -1,6 +1,6 @@
 <?php
 require __DIR__ . '/../lib/bootstrap.php'; require __DIR__ . '/../lib/admin_layout.php'; require __DIR__ . '/../lib/upload.php'; require_admin();
-require __DIR__ . '/../lib/themes.php'; require __DIR__ . '/../lib/music.php';
+require __DIR__ . '/../lib/themes.php'; require __DIR__ . '/../lib/music.php'; require __DIR__ . '/../lib/covers.php';
 const RESERVED = ['admin', 'install', 'uploads', 'assets', 'lib', 'rsvp', 'ics', 'panel'];
 $id = (int)($_GET['id'] ?? 0);
 $inv = $id ? q('SELECT * FROM invitations WHERE id=?', [$id])->fetch() : null;
@@ -46,9 +46,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             foreach ((array)($_POST['remove_img'] ?? []) as $r) { if (($k = array_search($r, $gallery, true)) !== false) { delete_upload($r); unset($gallery[$k]); } }
             foreach (reorder_files($_FILES['gallery'] ?? []) as $f) if ($f['name'] && count($gallery) < 12 && ($n = save_image($f))) $gallery[] = $n;
             $vals = [$slug, $tpl, $groom, $bride, trim($_POST['message'] ?? ''), safe_url($_POST['music_url'] ?? ''), $musicFile, $cover, json_encode(array_values($gallery)), $accessHash, empty($_POST['is_active']) ? 0 : 1, $accent, $ownerEmail ?: null,
-                $ownerEmail === '' ? null : ($ownerPw !== '' ? password_hash($ownerPw, PASSWORD_DEFAULT) : ($inv['owner_password'] ?? null))];
-            if ($inv) { q('UPDATE invitations SET slug=?,template=?,groom=?,bride=?,message=?,music_url=?,music_file=?,cover_image=?,gallery=?,access_password=?,is_active=?,accent_color=?,owner_email=?,owner_password=? WHERE id=?', [...$vals, $id]); }
-            else { q('INSERT INTO invitations (slug,template,groom,bride,message,music_url,music_file,cover_image,gallery,access_password,is_active,accent_color,owner_email,owner_password) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)', $vals); $id = (int)$pdo->lastInsertId(); }
+                $ownerEmail === '' ? null : ($ownerPw !== '' ? password_hash($ownerPw, PASSWORD_DEFAULT) : ($inv['owner_password'] ?? null)),
+                ($_POST['lang'] ?? 'ar') === 'en' ? 'en' : 'ar', isset(COVER_PRESETS[$_POST['cover_preset'] ?? '']) ? $_POST['cover_preset'] : null];
+            if ($inv) { q('UPDATE invitations SET slug=?,template=?,groom=?,bride=?,message=?,music_url=?,music_file=?,cover_image=?,gallery=?,access_password=?,is_active=?,accent_color=?,owner_email=?,owner_password=?,lang=?,cover_preset=? WHERE id=?', [...$vals, $id]); }
+            else { q('INSERT INTO invitations (slug,template,groom,bride,message,music_url,music_file,cover_image,gallery,access_password,is_active,accent_color,owner_email,owner_password,lang,cover_preset) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', $vals); $id = (int)$pdo->lastInsertId(); }
             q('DELETE FROM events WHERE invitation_id=?', [$id]);
             foreach ($evs as $o => $ev) q('INSERT INTO events (invitation_id,title,event_at,venue,address,map_url,sort_order) VALUES (?,?,?,?,?,?,?)', [$id, $ev[0], $ev[1], $ev[2], $ev[3], $ev[4], $o]);
             $pdo->commit();
@@ -66,9 +67,10 @@ admin_header($id ? 'تعديل دعوة' : 'دعوة جديدة'); ?>
 <label>اسم العريس <input name="groom" value="<?= $v('groom') ?>" required></label>
 <label>اسم العروسة <input name="bride" value="<?= $v('bride') ?>" required></label>
 <label>رابط الدعوة (إنجليزي) — <?= e(url('')) ?><b>ahmed-sara</b><input name="slug" value="<?= $v('slug') ?>" pattern="[a-z0-9-]{3,60}" required></label>
+<label>لغة صفحة الدعوة <select name="lang" id="langSel"><option value="ar" <?= ($inv['lang'] ?? 'ar') === 'ar' ? 'selected' : '' ?>>العربية (RTL)</option><option value="en" <?= ($inv['lang'] ?? 'ar') === 'en' ? 'selected' : '' ?>>English (LTR)</option></select></label>
 <label>التصميم <select name="template"><?php foreach (THEMES as $k => $l): ?><option value="<?= $k ?>" <?= ($inv['template'] ?? 'royal') === $k ? 'selected' : '' ?>><?= e($l) ?></option><?php endforeach; ?></select></label>
 </div>
-<label>كلمة الدعوة / رسالة ترحيب <textarea name="message" rows="3"><?= $v('message', 'يتشرف أهل العروسين بدعوتكم لحضور حفل زفافهما') ?></textarea></label>
+<label>كلمة الدعوة / رسالة ترحيب <textarea name="message" id="msgBox" rows="3"><?= $v('message', 'يتشرف أهل العروسين بدعوتكم لحضور حفل زفافهما') ?></textarea><small class="muted">اكتب الرسالة والأسماء والأماكن بلغة الدعوة اللي اخترتها (النصوص الثابتة زي الأزرار بتتترجم تلقائيًا).</small></label>
 <h3>المناسبات (كتب كتاب / حنة / فرح…)</h3>
 <div id="events"><?php foreach ($events as $ev): ?>
 <div class="event-row grid">
@@ -81,8 +83,11 @@ admin_header($id ? 'تعديل دعوة' : 'دعوة جديدة'); ?>
 <?php endforeach; ?></div>
 <button type="button" class="btn sec sm" id="addEv">+ مناسبة</button>
 <h3>الصور والموسيقى</h3>
+<p class="muted" style="margin:4px 0">صورة غلاف جاهزة (بتظهر لو ماترفعتش صورة):</p>
+<div class="presets"><label class="preset"><input type="radio" name="cover_preset" value="" <?= empty($inv['cover_preset']) ? 'checked' : '' ?>><span class="pv none">بدون</span></label>
+<?php foreach (COVER_PRESETS as $k => $l): ?><label class="preset"><input type="radio" name="cover_preset" value="<?= $k ?>" <?= ($inv['cover_preset'] ?? '') === $k ? 'checked' : '' ?>><span class="pv" style="background-image:url(<?= e(url('assets/covers/' . $k . '.jpg')) ?>)"></span><small><?= e($l) ?></small></label><?php endforeach; ?></div>
 <div class="grid">
-<label>صورة الغلاف <input type="file" name="cover" accept="image/jpeg,image/png,image/webp"></label>
+<label>صورة الغلاف (ارفع صورتك — بتغلب على الجاهزة) <input type="file" name="cover" accept="image/jpeg,image/png,image/webp"></label>
 <label>رابط موسيقى (YouTube أو أي رابط mp3 مباشر) <input name="music_url" value="<?= $v('music_url') ?>" placeholder="https://youtu.be/... أو https://.../song.mp3"></label></div>
 <div class="card" style="background:#faf6ee;box-shadow:none;border:1px dashed #cbbf9f;margin:8px 0">
 <label>أو ارفع الأغنية كملف (mp3 / m4a / aac / ogg / wav — لحد 20 ميجا، وبتغلب على الرابط)
@@ -114,5 +119,7 @@ admin_header($id ? 'تعديل دعوة' : 'دعوة جديدة'); ?>
 <label>المكان <input name="ev_venue[]"></label><label>العنوان التفصيلي <input name="ev_address[]"></label>
 <label>رابط Google Maps <input name="ev_map[]"></label>
 <label>&nbsp;<button type="button" class="btn sm danger" onclick="this.closest('.event-row').remove()">حذف المناسبة</button></label></div></template>
+<script>(function(){var s=document.getElementById('langSel'),m=document.getElementById('msgBox'),D={ar:'يتشرف أهل العروسين بدعوتكم لحضور حفل زفافهما',en:'Together with their families, they joyfully invite you to celebrate their wedding.'};
+s.onchange=function(){var o=s.value==='en'?'ar':'en';if(!m.value.trim()||m.value.trim()===D[o])m.value=D[s.value]}})();</script>
 <script>document.getElementById('addEv').onclick=()=>document.getElementById('events').append(document.getElementById('evTpl').content.cloneNode(true));</script>
 <?php admin_footer();
