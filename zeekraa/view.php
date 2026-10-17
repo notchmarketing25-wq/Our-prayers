@@ -55,7 +55,7 @@ $ar = fn($ts) => fmt_dt($ts, $L);
 <div class="progress" id="prog"></div><div class="fx" id="fx" aria-hidden="true"></div>
 <div class="intro" id="intro" role="button" tabindex="0" aria-label="<?= e($T('open_aria')) ?>">
   <div class="env"><div class="flap"></div><div class="seal">♡</div></div>
-  <p class="in-names"><?= !empty($inv['intro_title']) ? e($inv['intro_title']) : $names ?></p><?php if (!empty($inv['intro_text'])): ?><p class="in-text"><?= e($inv['intro_text']) ?></p><?php endif; ?><p class="in-hint"><?= e($T('tap')) ?></p>
+  <p class="in-names"><?= !empty($inv['intro_title']) ? nl2br(e($inv['intro_title'])) : $names ?></p><?php if (!empty($inv['intro_text'])): ?><p class="in-text"><?= nl2br(e($inv['intro_text'])) ?></p><?php endif; ?><p class="in-hint"><?= e($T('tap')) ?></p>
 </div>
 <script>/* احتياطي: يفتح الظرف حتى لو ملف invite.js ماتحملش */
 (function(){var i=document.getElementById('intro'),b=document.body;if(!i)return;

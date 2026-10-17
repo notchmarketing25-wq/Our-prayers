@@ -65,8 +65,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $vals = [$slug, $tpl, $groom, $bride, trim($_POST['message'] ?? ''), safe_url($_POST['music_url'] ?? ''), $musicFile, $cover, json_encode(array_values($gallery)), $accessHash, empty($_POST['is_active']) ? 0 : 1, $accent, $ownerEmail ?: null,
                 $ownerEmail === '' ? null : ($ownerPw !== '' ? password_hash($ownerPw, PASSWORD_DEFAULT) : ($inv['owner_password'] ?? null)),
                 ($_POST['lang'] ?? 'ar') === 'en' ? 'en' : 'ar', null,
-                mb_substr(trim($_POST['intro_title'] ?? ''), 0, 160) ?: null, mb_substr(trim($_POST['intro_text'] ?? ''), 0, 255) ?: null,
-                mb_substr(trim($_POST['photo_caption'] ?? ''), 0, 255) ?: null, in_array($_POST['caption_pos'] ?? '', ['top', 'center', 'bottom'], true) ? $_POST['caption_pos'] : 'bottom',
+                mb_substr(trim(str_replace("\r\n", "\n", $_POST['intro_title'] ?? '')), 0, 160) ?: null, mb_substr(trim(str_replace("\r\n", "\n", $_POST['intro_text'] ?? '')), 0, 255) ?: null,
+                mb_substr(trim(str_replace("\r\n", "\n", $_POST['photo_caption'] ?? '')), 0, 255) ?: null, in_array($_POST['caption_pos'] ?? '', ['top', 'center', 'bottom'], true) ? $_POST['caption_pos'] : 'bottom',
                 $notes ? json_encode($notes, JSON_UNESCAPED_UNICODE) : null,
                 null,
                 $titles ? json_encode($titles, JSON_UNESCAPED_UNICODE) : null,
@@ -116,10 +116,11 @@ admin_header($id ? 'تعديل دعوة' : 'دعوة جديدة'); ?>
 <label>وصف الرابط في معاينة واتساب (فاضي = رسالة الترحيب)<input name="page_desc" value="<?= $v('page_desc') ?>" maxlength="255" placeholder="مثال: يسعدنا حضوركم"></label>
 </div>
 <h3>كتابة على الشاشة الافتتاحية (الظرف) وعلى الصورة</h3>
+<p class="muted" style="margin:4px 0">اضغط <b>Enter</b> عشان تنزل لسطر جديد — كل سطر بيظهر في الدعوة تحت اللي قبله بالظبط.</p>
 <div class="grid">
-<label>جملة بدل الأسماء على الظرف (اختياري — لو فاضي بتظهر الأسماء)<input name="intro_title" value="<?= $v('intro_title') ?>" maxlength="160" placeholder="مثال: دعوة زفاف محمد ومريم"></label>
-<label>سطر تحت الاسم/الجملة على الظرف (اختياري)<input name="intro_text" value="<?= $v('intro_text') ?>" maxlength="255" placeholder="مثال: 27 مارس 2027 — بنتشرف بحضوركم"></label>
-<label>جملة على صورة الغلاف (اختياري)<input name="photo_caption" value="<?= $v('photo_caption') ?>" maxlength="255" placeholder="مثال: وبدأت حكايتنا..."></label>
+<label>جملة بدل الأسماء على الظرف (اختياري — لو فاضي بتظهر الأسماء)<textarea name="intro_title" rows="2" maxlength="160" placeholder="مثال: دعوة زفاف محمد ومريم"><?= $v('intro_title') ?></textarea></label>
+<label>سطر تحت الاسم/الجملة على الظرف (اختياري)<textarea name="intro_text" rows="2" maxlength="255" placeholder="مثال: 27 مارس 2027 — بنتشرف بحضوركم"><?= $v('intro_text') ?></textarea></label>
+<label>جملة على صورة الغلاف (اختياري)<textarea name="photo_caption" rows="3" maxlength="255" placeholder="مثال: وبدأت حكايتنا..."><?= $v('photo_caption') ?></textarea></label>
 <label>مكان الجملة على الصورة<select name="caption_pos"><?php foreach (['bottom' => 'تحت (أنسب — الصورة تفضل ظاهرة)', 'center' => 'في النص', 'top' => 'فوق'] as $k => $l): ?><option value="<?= $k ?>" <?= ($inv['caption_pos'] ?? 'bottom') === $k ? 'selected' : '' ?>><?= e($l) ?></option><?php endforeach; ?></select></label>
 <label>ستايل الجملة على الصورة<select name="caption_style"><?php foreach (['pill' => 'كبسولة شفافة (هادي)', 'poster' => 'بوستر — خط عريض كبير', 'script' => 'خط أنيق مائل', 'plain' => 'نص بسيط بدون خلفية'] as $k => $l): ?><option value="<?= $k ?>" <?= ($inv['caption_style'] ?? 'pill') === $k ? 'selected' : '' ?>><?= e($l) ?></option><?php endforeach; ?></select></label>
 <label>لون الجملة<select name="caption_color"><?php foreach (['light' => 'تلقائي (يناسب التصميم)', 'dark' => 'أسود', 'accent' => 'لون الدعوة'] as $k => $l): ?><option value="<?= $k ?>" <?= ($inv['caption_color'] ?? 'light') === $k ? 'selected' : '' ?>><?= e($l) ?></option><?php endforeach; ?></select></label>
