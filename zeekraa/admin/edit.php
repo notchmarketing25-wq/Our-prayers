@@ -41,10 +41,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!empty($_POST['clear_password'])) $accessHash = null; elseif ($pw !== '') $accessHash = password_hash($pw, PASSWORD_DEFAULT);
             if ($newMusic) { delete_upload($musicFile); $musicFile = $newMusic; }
             elseif (!empty($_POST['remove_music'])) { delete_upload($musicFile); $musicFile = null; }
-            $cover = $inv['cover_image'] ?? null;
-            if (!empty($_FILES['cover']['name']) && ($n = save_image($_FILES['cover']))) { delete_upload($cover); $cover = $n; }
+            $cover = $inv['cover_image'] ?? null; $warn = [];
+            if (!empty($_POST['remove_cover'])) { delete_upload($cover); $cover = null; }
+            if (!empty($_FILES['cover']['name'])) { [$n, $why] = save_image_r($_FILES['cover']); if ($n) { delete_upload($cover); $cover = $n; } else $warn[] = 'صورة الغلاف: ' . $why; }
             foreach ((array)($_POST['remove_img'] ?? []) as $r) { if (($k = array_search($r, $gallery, true)) !== false) { delete_upload($r); unset($gallery[$k]); } }
-            foreach (reorder_files($_FILES['gallery'] ?? []) as $f) if ($f['name'] && count($gallery) < 12 && ($n = save_image($f))) $gallery[] = $n;
+            foreach (reorder_files($_FILES['gallery'] ?? []) as $f) {
+                if (!$f['name']) continue;
+                if (count($gallery) >= 12) { $warn[] = $f['name'] . ': وصلت للحد الأقصى (12 صورة)'; continue; }
+                [$n, $why] = save_image_r($f); if ($n) $gallery[] = $n; else $warn[] = $f['name'] . ': ' . $why;
+            }
             $vals = [$slug, $tpl, $groom, $bride, trim($_POST['message'] ?? ''), safe_url($_POST['music_url'] ?? ''), $musicFile, $cover, json_encode(array_values($gallery)), $accessHash, empty($_POST['is_active']) ? 0 : 1, $accent, $ownerEmail ?: null,
                 $ownerEmail === '' ? null : ($ownerPw !== '' ? password_hash($ownerPw, PASSWORD_DEFAULT) : ($inv['owner_password'] ?? null)),
                 ($_POST['lang'] ?? 'ar') === 'en' ? 'en' : 'ar', isset(COVER_PRESETS[$_POST['cover_preset'] ?? '']) ? $_POST['cover_preset'] : null];
@@ -53,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             q('DELETE FROM events WHERE invitation_id=?', [$id]);
             foreach ($evs as $o => $ev) q('INSERT INTO events (invitation_id,title,event_at,venue,address,map_url,sort_order) VALUES (?,?,?,?,?,?,?)', [$id, $ev[0], $ev[1], $ev[2], $ev[3], $ev[4], $o]);
             $pdo->commit();
-            flash('تم الحفظ ✓'); redirect(url('admin/'));
+            flash('تم الحفظ ✓' . ($warn ? ' — بس فيه صور ماترفعتش: ' . implode(' | ', $warn) : '')); redirect(url('admin/'));
         } catch (Throwable $t) { $pdo->rollBack(); $err = 'خطأ أثناء الحفظ: ' . $t->getMessage(); }
     }
     $inv = array_merge($inv ?? [], $_POST); $events = array_map(fn($e) => ['title' => $e[0], 'event_at' => $e[1], 'venue' => $e[2], 'address' => $e[3], 'map_url' => $e[4]], $evs ?: $events);
@@ -95,7 +100,7 @@ admin_header($id ? 'تعديل دعوة' : 'دعوة جديدة'); ?>
 <?php if (!empty($inv['music_file'])): ?><audio controls preload="none" src="<?= e(url('uploads/' . $inv['music_file'])) ?>" style="width:100%;margin-top:8px"></audio>
 <label style="font-weight:400"><input type="checkbox" name="remove_music" value="1" style="display:inline;width:auto"> حذف الأغنية المرفوعة</label><?php endif; ?>
 <small class="muted">لو الأغنية كبيرة وماترفعتش: زوّد <code>upload_max_filesize</code> و<code>post_max_size</code> من إعدادات PHP في الاستضافة، أو استخدم رابط.</small></div>
-<?php if (!empty($inv['cover_image'])): ?><div class="thumbs"><img src="<?= url('uploads/' . $inv['cover_image']) ?>" alt=""></div><?php endif; ?>
+<?php if (!empty($inv['cover_image'])): ?><div class="thumbs"><label style="display:inline-block"><img src="<?= url('uploads/' . $inv['cover_image']) ?>" alt=""><br><input type="checkbox" name="remove_cover" value="1" style="display:inline;width:auto"> حذف صورة الغلاف</label></div><?php endif; ?>
 <label>معرض الصور (لحد 12) <input type="file" name="gallery[]" multiple accept="image/jpeg,image/png,image/webp"></label>
 <div class="thumbs"><?php foreach ($gallery as $g): ?><label style="display:inline-block"><img src="<?= url('uploads/' . $g) ?>" alt=""><br><input type="checkbox" name="remove_img[]" value="<?= e($g) ?>" style="display:inline;width:auto"> حذف</label><?php endforeach; ?></div>
 <h3>لون الدعوة</h3>
