@@ -18,12 +18,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $evs = [];
     foreach ($_POST['ev_title'] ?? [] as $i => $t) {
         $at = str_replace('T', ' ', trim($_POST['ev_at'][$i] ?? ''));
-        if (trim($t) === '' || $at === '') continue;
+        if ($at === '') continue; // العنوان اختياري، الميعاد هو الإلزامي
         $evs[] = [trim($t), strlen($at) === 16 ? $at . ':00' : $at, trim($_POST['ev_venue'][$i] ?? ''), trim($_POST['ev_address'][$i] ?? ''), safe_url($_POST['ev_map'][$i] ?? ''), mb_substr(trim($_POST['ev_note'][$i] ?? ''), 0, 255)];
     }
     if (!preg_match('/^[a-z0-9-]{3,60}$/', $slug) || in_array($slug, RESERVED, true)) $err = 'الرابط لازم حروف إنجليزي صغيرة/أرقام/شرطة (3 حروف على الأقل) ومش كلمة محجوزة.';
     elseif ($groom === '' || $bride === '') $err = 'اسم العريس والعروسة مطلوبين.';
-    elseif (!$evs) $err = 'ضيف مناسبة واحدة على الأقل (عنوان + ميعاد).';
+    elseif (!$evs) $err = 'ضيف مناسبة واحدة على الأقل (الميعاد مطلوب، والعنوان اختياري).';
     elseif (q('SELECT id FROM invitations WHERE slug=? AND id<>?', [$slug, $id])->fetch()) $err = 'الرابط ده مستخدم قبل كده.';
     $ownerEmail = strtolower(trim($_POST['owner_email'] ?? ''));
     if (!$err && $ownerEmail !== '' && !filter_var($ownerEmail, FILTER_VALIDATE_EMAIL)) $err = 'إيميل العميل غير صحيح.';
@@ -131,7 +131,7 @@ admin_header($id ? 'تعديل دعوة' : 'دعوة جديدة'); ?>
 
 <div id="events"><?php foreach ($events as $ev): ?>
 <div class="event-row grid">
-<label>العنوان <input name="ev_title[]" value="<?= e($ev['title']) ?>"></label>
+<label>العنوان (اختياري) <input name="ev_title[]" value="<?= e($ev['title']) ?>" placeholder="ممكن تسيبه فاضي"></label>
 <label>الميعاد <input type="datetime-local" name="ev_at[]" value="<?= e(str_replace(' ', 'T', substr((string)$ev['event_at'], 0, 16))) ?>"></label>
 <label>المكان <input name="ev_venue[]" value="<?= e($ev['venue']) ?>"></label>
 <label>العنوان التفصيلي <input name="ev_address[]" value="<?= e($ev['address']) ?>"></label>
@@ -190,7 +190,7 @@ admin_header($id ? 'تعديل دعوة' : 'دعوة جديدة'); ?>
 <button class="btn">حفظ</button> <a class="btn sec" href="<?= url('admin/') ?>">رجوع</a>
 </form>
 <template id="evTpl"><div class="event-row grid">
-<label>العنوان <input name="ev_title[]"></label><label>الميعاد <input type="datetime-local" name="ev_at[]"></label>
+<label>العنوان (اختياري) <input name="ev_title[]" placeholder="ممكن تسيبه فاضي"></label><label>الميعاد <input type="datetime-local" name="ev_at[]"></label>
 <label>المكان <input name="ev_venue[]"></label><label>العنوان التفصيلي <input name="ev_address[]"></label>
 <label>رابط Google Maps <input name="ev_map[]"></label>
 <label>ملاحظة على المناسبة (اختياري) <input name="ev_note[]" maxlength="255"></label>

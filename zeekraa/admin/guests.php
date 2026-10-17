@@ -27,7 +27,7 @@ admin_header('الضيوف'); ?>
 <div class="card"><table><tr><th>الضيف</th><th>الأفراد</th><th>الحالة</th><th>اللينك الخاص</th><th></th></tr>
 <?php foreach ($guests as $g):
     $link = url($inv['slug']) . '?g=' . $g['token'];
-    $text = tr('wa_invite', inv_lang($inv), $g['name'], $first['title'] ?? '', $inv['groom'] . ' & ' . $inv['bride'], $link);
+    $text = tr('wa_invite', inv_lang($inv), $g['name'], (trim((string)($first['title'] ?? '')) ?: (inv_lang($inv) === 'en' ? 'our celebration' : 'مناسبتنا')), $inv['groom'] . ' & ' . $inv['bride'], $link);
     $wa = 'https://wa.me/' . ($g['phone'] ? normalize_phone_eg($g['phone']) : '') . '?text=' . rawurlencode($text); ?>
 <tr><td><?= e($g['name']) ?><br><small class="muted"><?= e($g['phone']) ?></small></td><td><?= (int)$g['max_guests'] ?></td>
 <td><?= $g['attending'] === null ? '— لم يرد' : ($g['attending'] ? '✓ حاضر (' . (int)$g['party_size'] . ')' : '✗ معتذر') ?></td>

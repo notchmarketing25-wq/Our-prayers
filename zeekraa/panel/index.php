@@ -28,7 +28,7 @@ $guests = q('SELECT g.*, r.attending, r.party_size, r.created_at replied_at FROM
   WHERE g.invitation_id=? ORDER BY g.id', [$id])->fetchAll();
 $rsvps = q('SELECT * FROM rsvps WHERE invitation_id=? ORDER BY id DESC', [$id])->fetchAll();
 
-$evTitle = $first['title'] ?? 'مناسبتنا';
+$evTitle = trim((string)($first['title'] ?? '')) ?: (inv_lang($inv) === 'en' ? 'our celebration' : 'مناسبتنا');
 $nGuests = count($guests);
 $replied = count(array_filter($guests, fn($g) => $g['attending'] !== null));
 $pending = $nGuests - $replied;
@@ -52,7 +52,7 @@ $ago = function (string $t) { $d = time() - strtotime($t);
 <?php if ($m = flash()): ?><div class="toast"><?= e($m) ?></div><?php endif; ?>
 
 <section class="welcome rise"><div><h1>أهلًا يا <?= e($inv['groom']) ?> و<?= e($inv['bride']) ?> 🤍</h1>
-<p><?= $days !== null ? ($days > 0 ? 'فاضل <b class="cnt" data-n="' . $days . '">0</b> يوم على ' . e($first['title']) : 'النهاردة ' . e($first['title']) . '، مبروك! 🎉') : '' ?></p></div>
+<p><?= $days !== null ? ($days > 0 ? 'فاضل <b class="cnt" data-n="' . $days . '">0</b> يوم على ' . ($first['title'] !== '' ? e($first['title']) : 'الميعاد') : 'النهاردة ' . ($first['title'] !== '' ? e($first['title']) . '، ' : '') . 'مبروك! 🎉') : '' ?></p></div>
 <div class="share"><input id="lnk" readonly dir="ltr" value="<?= e($link) ?>"><button class="pill" id="copy" type="button">نسخ الرابط</button>
 <a class="pill wa" target="_blank" rel="noopener" href="https://wa.me/?text=<?= rawurlencode(inv_lang($inv) === 'en' ? "We would be honoured by your presence 🤍\n{$inv['groom']} & {$inv['bride']}\n$link" : "يشرفنا حضورك 🤍\n{$inv['groom']} & {$inv['bride']}\n$link") ?>">واتساب</a></div></section>
 

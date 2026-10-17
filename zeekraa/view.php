@@ -91,7 +91,7 @@ setTimeout(function(){if(i.className.indexOf('open')<0&&!window.__inviteReady){i
 
 <section id="events" class="events"><?php $evT = sec_title($inv, 'events', $T('events')); if ($evT !== ''): ?><h2><?= e($evT) ?></h2><?php endif; ?>
 <?php foreach ($events as $ev): [$d, $t] = $ar(strtotime($ev['event_at'])); ?>
-<article class="ev"><h3><?= e($ev['title']) ?></h3><p class="when"><?= e($d) ?> · <?= e($t) ?></p>
+<article class="ev"><?php if (trim($ev['title']) !== ''): ?><h3><?= e($ev['title']) ?></h3><?php endif; ?><p class="when"><?= e($d) ?> · <?= e($t) ?></p>
 <?php if ($ev['venue']): ?><p class="where"><?= e($ev['venue']) ?><?= $ev['address'] ? ' — ' . e($ev['address']) : '' ?></p><?php endif; ?>
 <?php if (!empty($ev['note'])): ?><p class="ev-note"><?= e($ev['note']) ?></p><?php endif; ?>
 <p class="acts"><?php if ($ev['map_url']): ?><a class="btn-i sm" target="_blank" rel="noopener" href="<?= e($ev['map_url']) ?>"><?= e($T('map')) ?></a><?php endif; ?>
