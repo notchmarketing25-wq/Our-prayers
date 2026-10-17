@@ -56,11 +56,11 @@
   document.querySelectorAll('.gal-g img').forEach(function(el,i){el.style.setProperty('--d',(i*.07)+'s')});
 
   // شريط التقدم + بارالاكس خفيف للهيرو
-  var prog=$('prog'),hero=$('photoImg')?null:document.querySelector('.hero-in'),tk=false;
+  var prog=$('prog'),hero=document.querySelector('.photo')?null:document.querySelector('.hero-in'),tk=false;
   var onScroll=function(){tk=false;var h=document.documentElement,sc=h.scrollTop||body.scrollTop,max=h.scrollHeight-h.clientHeight;
     if(prog)prog.style.transform='scaleX('+(max>0?sc/max:0)+')';
     if(hero&&!reduce&&sc<innerHeight){hero.style.transform='translateY('+sc*.25+'px)';hero.style.opacity=Math.max(0,1-sc/(innerHeight*.9))}}
-  var ph=$('photoImg');
+  var ph=$('photoImg');if(ph&&!ph.classList.contains('photo-img'))ph=null;
   var _on=onScroll;onScroll=function(){_on();var sc=document.documentElement.scrollTop;if(ph&&!reduce&&sc<innerHeight*1.2)ph.style.translate='0 '+Math.min(40,sc*.08)+'px'};
   addEventListener('scroll',function(){if(!tk){tk=true;requestAnimationFrame(onScroll)}},{passive:true});
 

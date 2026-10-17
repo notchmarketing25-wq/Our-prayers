@@ -190,3 +190,39 @@ html[lang=ar] .photo-cap.cs-script p{font-style:normal;font-family:'Aref Ruqaa',
 .photo-cap.cs-script.sz-sm p,.photo-cap.cs-plain.sz-sm p{font-size:clamp(1.05rem,4.6vw,1.8rem)}.photo-cap.cs-script.sz-lg p{font-size:clamp(2rem,9.5vw,3.6rem)}.photo-cap.cs-plain.sz-lg p{font-size:clamp(1.4rem,6vw,2.2rem)}
 .photo-cap.pos-center.cs-poster,.photo-cap.pos-center.cs-script{top:50%}
 .photo-cap.pos-bottom.cs-poster{bottom:70px}
+
+/* ===== الهيدر المتناسق مع السمة ===== */
+.photo{--h-base:var(--hdr,var(--accent))}
+.photo.hd-arch,.photo.hd-oval,.photo.hd-frame{height:auto;min-height:92svh;max-height:none;display:grid;place-items:center;padding:60px 0 92px;color:var(--h-base);background:none}
+.hd-bg{position:absolute;inset:0;background:linear-gradient(180deg,color-mix(in srgb,var(--h-base) 11%,var(--hero)) 0%,color-mix(in srgb,var(--h-base) 22%,var(--bg)) 100%)}
+.hd-decor{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;color:var(--h-base);opacity:0;animation:decIn 1.8s .2s ease forwards}
+@keyframes decIn{to{opacity:1}}
+.photo.hd-arch::after,.photo.hd-oval::after,.photo.hd-frame::after{content:"";position:absolute;inset-inline:0;bottom:0;height:110px;background:linear-gradient(transparent,var(--bg));pointer-events:none;z-index:1}
+.ph-shape{position:relative;z-index:2;width:min(74vw,340px);aspect-ratio:4/5;box-shadow:0 26px 56px color-mix(in srgb,#000 30%,transparent)}
+body.locked .ph-shape{opacity:0}
+body.go .ph-shape{animation:phIn 1.5s cubic-bezier(.2,.7,.2,1) both,phFloat 7s 1.6s ease-in-out infinite}
+@keyframes phIn{from{opacity:0;transform:translateY(34px) scale(.93)}}@keyframes phFloat{50%{transform:translateY(-8px)}}
+.ph-img{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 24%;border-radius:inherit}
+.hd-arch .ph-shape{border-radius:999px 999px 16px 16px}
+.hd-oval .ph-shape{border-radius:50%;aspect-ratio:3/4;width:min(68vw,310px)}
+.hd-arch .ph-shape::before,.hd-oval .ph-shape::before,.hd-arch .ph-shape::after,.hd-oval .ph-shape::after{content:"";position:absolute;border:1.5px solid var(--h-base);border-radius:inherit;pointer-events:none}
+.hd-arch .ph-shape::before,.hd-oval .ph-shape::before{inset:-12px;opacity:.7}
+.hd-arch .ph-shape::after,.hd-oval .ph-shape::after{inset:-26px;opacity:.35}
+.hd-frame .ph-shape{border-radius:3px;box-shadow:0 0 0 9px var(--bg),0 0 0 11px var(--h-base),0 0 0 22px var(--bg),0 0 0 23.5px color-mix(in srgb,var(--h-base) 55%,transparent),0 30px 60px color-mix(in srgb,#000 30%,transparent)}
+.hd-frame .ph-shape::before{content:"";position:absolute;inset:-34px;pointer-events:none;background:
+ linear-gradient(var(--h-base),var(--h-base)) 0 0/18px 2px no-repeat,linear-gradient(var(--h-base),var(--h-base)) 0 0/2px 18px no-repeat,
+ linear-gradient(var(--h-base),var(--h-base)) 100% 0/18px 2px no-repeat,linear-gradient(var(--h-base),var(--h-base)) 100% 0/2px 18px no-repeat,
+ linear-gradient(var(--h-base),var(--h-base)) 0 100%/18px 2px no-repeat,linear-gradient(var(--h-base),var(--h-base)) 0 100%/2px 18px no-repeat,
+ linear-gradient(var(--h-base),var(--h-base)) 100% 100%/18px 2px no-repeat,linear-gradient(var(--h-base),var(--h-base)) 100% 100%/2px 18px no-repeat}
+/* مونوجرام لما مفيش صورة */
+.ph-shape.mono{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;color:var(--ink);box-shadow:none;aspect-ratio:4/5;width:min(62vw,250px);
+ background:color-mix(in srgb,var(--bg) 55%,transparent);border:2px solid var(--h-base);backdrop-filter:blur(3px)}
+.hd-arch .ph-shape.mono{border-radius:999px 999px 16px 16px}.hd-oval .ph-shape.mono{border-radius:50%}.hd-frame .ph-shape.mono{border-radius:3px;box-shadow:none}
+.ph-shape.mono span{font-family:'Cormorant Garamond',Amiri,Georgia,serif;font-weight:700;font-size:clamp(3.2rem,17vw,5.2rem);line-height:1.02;letter-spacing:.02em}
+.ph-shape.mono i{font-style:normal;color:var(--h-base);font-size:1.7rem;line-height:1}
+.hd-arch .ph-shape.mono::before,.hd-oval .ph-shape.mono::before{inset:8px;opacity:.5}.hd-arch .ph-shape.mono::after,.hd-oval .ph-shape.mono::after{display:none}
+.photo.hd-arch .photo-cap.pos-bottom,.photo.hd-oval .photo-cap.pos-bottom,.photo.hd-frame .photo-cap.pos-bottom{bottom:30px;z-index:3}
+.photo.hd-arch .photo-cap,.photo.hd-oval .photo-cap,.photo.hd-frame .photo-cap{z-index:3}
+.photo.hd-arch .cue,.photo.hd-oval .cue,.photo.hd-frame .cue{z-index:3;color:var(--h-base)}
+.hero.below{background:var(--bg)}
+@media(prefers-reduced-motion:reduce){.ph-shape,.hd-decor{opacity:1!important;animation:none!important;transform:none!important}}

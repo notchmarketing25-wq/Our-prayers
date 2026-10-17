@@ -1,5 +1,5 @@
 <?php
-require __DIR__ . '/lib/bootstrap.php'; require __DIR__ . '/lib/themes.php'; require __DIR__ . '/lib/music.php'; require __DIR__ . '/lib/i18n.php'; require __DIR__ . '/lib/covers.php';
+require __DIR__ . '/lib/bootstrap.php'; require __DIR__ . '/lib/themes.php'; require __DIR__ . '/lib/music.php'; require __DIR__ . '/lib/i18n.php'; require __DIR__ . '/lib/covers.php'; require __DIR__ . '/lib/header.php';
 $slug = $_GET['slug'] ?? '';
 $inv = q('SELECT * FROM invitations WHERE slug=? AND is_active=1', [$slug])->fetch();
 if (!$inv) { http_response_code(404); exit('<!doctype html><meta charset="utf-8"><body style="font-family:sans-serif;text-align:center;padding:4rem">الدعوة غير موجودة · Invitation not found'); }
@@ -21,6 +21,12 @@ $names = e($inv['groom'] . ' & ' . $inv['bride']);
 $pageTitle = !empty($inv['page_title']) ? e($inv['page_title']) : $names;
 $bodyStyle = !empty($inv['accent_color']) ? ' style="--accent:' . e($inv['accent_color']) . ';--on:' . contrast_on($inv['accent_color']) . '"' : '';
 $cover = cover_url($inv);
+$hs = isset(HEADER_STYLES[$inv['header_style'] ?? '']) ? $inv['header_style'] : 'photo';
+if ($hs === 'photo' && !$cover) $hs = 'arch';          // بدون صورة: هيدر زخرفي بمونوجرام
+$hd = isset(HEADER_DECORS[$inv['header_decor'] ?? '']) ? $inv['header_decor'] : 'floral';
+$hdrStyle = !empty($inv['header_color']) ? ' style="--hdr:' . e($inv['header_color']) . '"' : '';
+$hide = hero_hidden($inv);
+$ini = fn($s) => mb_strtoupper(mb_substr(trim($s), 0, 1));
 ?><!doctype html>
 <html lang="<?= $L ?>" dir="<?= $dir ?>"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
@@ -45,7 +51,7 @@ $next = null; foreach ($events as $ev) if (strtotime($ev['event_at']) > time()) 
 $next ??= $events[0] ?? null;
 $ar = fn($ts) => fmt_dt($ts, $L);
 ?>
-<noscript><style>.intro{display:none!important}.photo-frame{clip-path:none!important}body.locked{overflow:auto!important}body.locked .hero-in>*{opacity:1!important}.gal-g img{opacity:1!important;transform:none!important}</style></noscript>
+<noscript><style>.intro{display:none!important}.ph-shape,.hd-decor{opacity:1!important}.photo-frame{clip-path:none!important}body.locked{overflow:auto!important}body.locked .hero-in>*{opacity:1!important}.gal-g img{opacity:1!important;transform:none!important}</style></noscript>
 <div class="progress" id="prog"></div><div class="fx" id="fx" aria-hidden="true"></div>
 <div class="intro" id="intro" role="button" tabindex="0" aria-label="<?= e($T('open_aria')) ?>">
   <div class="env"><div class="flap"></div><div class="seal">♡</div></div>
@@ -57,19 +63,28 @@ function o(){if(i.className.indexOf('open')>-1)return;i.className+=' open';b.cla
  var a=document.getElementById('bg');try{a&&a.play&&a.play()}catch(e){}}
 i.onclick=o;i.onkeydown=function(e){if(e.key==='Enter'||e.key===' ')o()};
 setTimeout(function(){if(i.className.indexOf('open')<0&&!window.__inviteReady){i.style.opacity='.0';i.style.pointerEvents='none';b.classList.remove('locked');b.classList.add('go')}},9000)})();</script>
-<?php if ($cover): ?>
-<header class="photo" id="photo"><div class="photo-frame"><img class="photo-img" id="photoImg" src="<?= e($cover) ?>" alt="<?= $names ?>" fetchpriority="high"></div>
+<?php if ($hs !== 'none'): ?>
+<header class="photo hd-<?= $hs ?> dec-<?= $hd ?>" id="photo"<?= $hdrStyle ?>>
+<?php if ($hs === 'photo'): ?>
+  <div class="photo-frame"><img class="photo-img" id="photoImg" src="<?= e($cover) ?>" alt="<?= $names ?>" fetchpriority="high"></div>
+<?php else: ?>
+  <div class="hd-bg"></div><?= header_decor($hd) ?>
+  <?php if ($cover): ?><div class="ph-shape"><img class="ph-img" id="photoImg" src="<?= e($cover) ?>" alt="<?= $names ?>" fetchpriority="high"></div>
+  <?php else: ?><div class="ph-shape mono" aria-hidden="true"><span><?= e($ini($inv['groom'])) ?></span><i>&amp;</i><span><?= e($ini($inv['bride'])) ?></span></div><?php endif; ?>
+<?php endif; ?>
 <?php if (!empty($inv['photo_caption'])): ?><div class="photo-cap pos-<?= e($inv['caption_pos'] ?: 'bottom') ?> cs-<?= e($inv['caption_style'] ?: 'pill') ?> cc-<?= e($inv['caption_color'] ?: 'light') ?> sz-<?= e($inv['caption_size'] ?: 'md') ?>"><p><?= nl2br(e($inv['photo_caption'])) ?></p></div><?php endif; ?>
 <span class="cue" aria-hidden="true">⌄</span></header>
 <?php endif; ?>
-<section class="hero<?= $cover ? ' below' : '' ?>"><div class="hero-in">
-<?php if ($guest): ?><p class="kicker"><?= e($T('dear', $guest['name'])) ?></p><?php else: ?><p class="kicker"><?= e($T('invited')) ?></p><?php endif; ?>
-<h1><span><?= e($inv['groom']) ?></span><i>&amp;</i><span><?= e($inv['bride']) ?></span></h1>
-<svg class="orn" viewBox="0 0 200 20" aria-hidden="true"><path d="M2 10h72M126 10h72" /><path d="M100 3c4 4 4 10 0 14-4-4-4-10 0-14z"/><circle cx="86" cy="10" r="2"/><circle cx="114" cy="10" r="2"/></svg>
-<?php if ($inv['message']): ?><p class="msg"><?= nl2br(e($inv['message'])) ?></p><?php endif; ?>
-<?php if ($next): [$d] = $ar(strtotime($next['event_at'])); ?><p class="date"><?= e($d) ?></p><?php endif; ?>
-<a href="#events" class="btn-i shine"><?= e($T('details')) ?></a>
-<?php if (!$cover): ?><span class="cue" aria-hidden="true">⌄</span><?php endif; ?></div></section>
+<?php $showHero = count(array_diff(array_keys(HERO_PARTS), $hide)) > 0 && !(in_array('kicker', $hide) && in_array('names', $hide) && in_array('message', $hide) && in_array('date', $hide) && in_array('button', $hide)); if ($showHero): ?>
+<section class="hero<?= $hs !== 'none' ? ' below' : '' ?>"><div class="hero-in">
+<?php if (!in_array('kicker', $hide)): ?><?php if ($guest): ?><p class="kicker"><?= e($T('dear', $guest['name'])) ?></p><?php else: ?><p class="kicker"><?= e($T('invited')) ?></p><?php endif; ?><?php endif; ?>
+<?php if (!in_array('names', $hide)): ?><h1><span><?= e($inv['groom']) ?></span><i>&amp;</i><span><?= e($inv['bride']) ?></span></h1>
+<svg class="orn" viewBox="0 0 200 20" aria-hidden="true"><path d="M2 10h72M126 10h72" /><path d="M100 3c4 4 4 10 0 14-4-4-4-10 0-14z"/><circle cx="86" cy="10" r="2"/><circle cx="114" cy="10" r="2"/></svg><?php endif; ?>
+<?php if ($inv['message'] && !in_array('message', $hide)): ?><p class="msg"><?= nl2br(e($inv['message'])) ?></p><?php endif; ?>
+<?php if ($next && !in_array('date', $hide)): [$d] = $ar(strtotime($next['event_at'])); ?><p class="date"><?= e($d) ?></p><?php endif; ?>
+<?php if (!in_array('button', $hide)): ?><a href="#events" class="btn-i shine"><?= e($T('details')) ?></a><?php endif; ?>
+<?php if ($hs === 'none'): ?><span class="cue" aria-hidden="true">⌄</span><?php endif; ?></div></section>
+<?php endif; ?>
 
 <?php if ($next): ?><section class="count"><div id="cd" data-ts="<?= (int)(new DateTime($next['event_at'], new DateTimeZone('Africa/Cairo')))->getTimestamp() ?>">
 <div><b id="cd-d">0</b><small><?= e($T('d')) ?></small></div><div><b id="cd-h">0</b><small><?= e($T('h')) ?></small></div><div><b id="cd-m">0</b><small><?= e($T('m')) ?></small></div><div><b id="cd-s">0</b><small><?= e($T('s')) ?></small></div></div></section><?php endif; ?>

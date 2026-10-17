@@ -1,6 +1,6 @@
 <?php
 require __DIR__ . '/../lib/bootstrap.php'; require __DIR__ . '/../lib/admin_layout.php'; require __DIR__ . '/../lib/upload.php'; require_admin();
-require __DIR__ . '/../lib/themes.php'; require __DIR__ . '/../lib/music.php'; require __DIR__ . '/../lib/covers.php'; require __DIR__ . '/../lib/i18n.php';
+require __DIR__ . '/../lib/themes.php'; require __DIR__ . '/../lib/music.php'; require __DIR__ . '/../lib/covers.php'; require __DIR__ . '/../lib/i18n.php'; require __DIR__ . '/../lib/header.php';
 const RESERVED = ['admin', 'install', 'uploads', 'assets', 'lib', 'rsvp', 'ics', 'panel'];
 $id = (int)($_GET['id'] ?? 0);
 $inv = $id ? q('SELECT * FROM invitations WHERE id=?', [$id])->fetch() : null;
@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             $vals = [$slug, $tpl, $groom, $bride, trim($_POST['message'] ?? ''), safe_url($_POST['music_url'] ?? ''), $musicFile, $cover, json_encode(array_values($gallery)), $accessHash, empty($_POST['is_active']) ? 0 : 1, $accent, $ownerEmail ?: null,
                 $ownerEmail === '' ? null : ($ownerPw !== '' ? password_hash($ownerPw, PASSWORD_DEFAULT) : ($inv['owner_password'] ?? null)),
-                ($_POST['lang'] ?? 'ar') === 'en' ? 'en' : 'ar', isset(COVER_PRESETS[$_POST['cover_preset'] ?? '']) ? $_POST['cover_preset'] : null,
+                ($_POST['lang'] ?? 'ar') === 'en' ? 'en' : 'ar', null,
                 mb_substr(trim($_POST['intro_title'] ?? ''), 0, 160) ?: null, mb_substr(trim($_POST['intro_text'] ?? ''), 0, 255) ?: null,
                 mb_substr(trim($_POST['photo_caption'] ?? ''), 0, 255) ?: null, in_array($_POST['caption_pos'] ?? '', ['top', 'center', 'bottom'], true) ? $_POST['caption_pos'] : 'bottom',
                 $notes ? json_encode($notes, JSON_UNESCAPED_UNICODE) : null,
@@ -73,9 +73,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 in_array($_POST['caption_style'] ?? '', ['pill', 'poster', 'script', 'plain'], true) ? $_POST['caption_style'] : 'pill',
                 in_array($_POST['caption_color'] ?? '', ['light', 'dark', 'accent'], true) ? $_POST['caption_color'] : 'light',
                 in_array($_POST['caption_size'] ?? '', ['sm', 'md', 'lg'], true) ? $_POST['caption_size'] : 'md',
-                mb_substr(trim($_POST['page_title'] ?? ''), 0, 160) ?: null, mb_substr(trim($_POST['page_desc'] ?? ''), 0, 255) ?: null];
-            if ($inv) { q('UPDATE invitations SET slug=?,template=?,groom=?,bride=?,message=?,music_url=?,music_file=?,cover_image=?,gallery=?,access_password=?,is_active=?,accent_color=?,owner_email=?,owner_password=?,lang=?,cover_preset=?,intro_title=?,intro_text=?,photo_caption=?,caption_pos=?,notes=?,events_title=?,titles=?,caption_style=?,caption_color=?,caption_size=?,page_title=?,page_desc=? WHERE id=?', [...$vals, $id]); }
-            else { q('INSERT INTO invitations (slug,template,groom,bride,message,music_url,music_file,cover_image,gallery,access_password,is_active,accent_color,owner_email,owner_password,lang,cover_preset,intro_title,intro_text,photo_caption,caption_pos,notes,events_title,titles,caption_style,caption_color,caption_size,page_title,page_desc) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', $vals); $id = (int)$pdo->lastInsertId(); }
+                mb_substr(trim($_POST['page_title'] ?? ''), 0, 160) ?: null, mb_substr(trim($_POST['page_desc'] ?? ''), 0, 255) ?: null,
+                isset(HEADER_STYLES[$_POST['header_style'] ?? '']) ? $_POST['header_style'] : 'photo',
+                isset(HEADER_DECORS[$_POST['header_decor'] ?? '']) ? $_POST['header_decor'] : 'floral',
+                (!empty($_POST['use_header_color']) && preg_match('/^#[0-9a-fA-F]{6}$/', $_POST['header_color'] ?? '')) ? strtolower($_POST['header_color']) : null,
+                implode(',', array_values(array_intersect((array)($_POST['hide_part'] ?? []), array_keys(HERO_PARTS)))) ?: null];
+            if ($inv) { q('UPDATE invitations SET slug=?,template=?,groom=?,bride=?,message=?,music_url=?,music_file=?,cover_image=?,gallery=?,access_password=?,is_active=?,accent_color=?,owner_email=?,owner_password=?,lang=?,cover_preset=?,intro_title=?,intro_text=?,photo_caption=?,caption_pos=?,notes=?,events_title=?,titles=?,caption_style=?,caption_color=?,caption_size=?,page_title=?,page_desc=?,header_style=?,header_decor=?,header_color=?,hero_hide=? WHERE id=?', [...$vals, $id]); }
+            else { q('INSERT INTO invitations (slug,template,groom,bride,message,music_url,music_file,cover_image,gallery,access_password,is_active,accent_color,owner_email,owner_password,lang,cover_preset,intro_title,intro_text,photo_caption,caption_pos,notes,events_title,titles,caption_style,caption_color,caption_size,page_title,page_desc,header_style,header_decor,header_color,hero_hide) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', $vals); $id = (int)$pdo->lastInsertId(); }
             q('DELETE FROM events WHERE invitation_id=?', [$id]);
             foreach ($evs as $o => $ev) q('INSERT INTO events (invitation_id,title,event_at,venue,address,map_url,note,sort_order) VALUES (?,?,?,?,?,?,?,?)', [$id, $ev[0], $ev[1], $ev[2], $ev[3], $ev[4], $ev[5] ?: null, $o]);
             $pdo->commit();
@@ -142,12 +146,20 @@ admin_header($id ? 'تعديل دعوة' : 'دعوة جديدة'); ?>
 <label>&nbsp;<button type="button" class="btn sm danger" onclick="this.closest('.note-row').remove()">حذف الملاحظة</button></label></div>
 <?php endforeach; ?></div>
 <button type="button" class="btn sec sm" id="addNote">+ ملاحظة فاضية</button>
-<h3>الصور والموسيقى</h3>
-<p class="muted" style="margin:4px 0">صورة غلاف جاهزة (بتظهر لو ماترفعتش صورة):</p>
-<div class="presets"><label class="preset"><input type="radio" name="cover_preset" value="" <?= empty($inv['cover_preset']) ? 'checked' : '' ?>><span class="pv none">بدون</span></label>
-<?php foreach (COVER_PRESETS as $k => $l): ?><label class="preset"><input type="radio" name="cover_preset" value="<?= $k ?>" <?= ($inv['cover_preset'] ?? '') === $k ? 'checked' : '' ?>><span class="pv" style="background-image:url(<?= e(url('assets/covers/' . $k . '.jpg')) ?>)"></span><small><?= e($l) ?></small></label><?php endforeach; ?></div>
+<h3>تصميم الهيدر (الجزء اللي فوق النص)</h3>
+<p class="muted" style="margin:4px 0">الهيدر بياخد ألوان التصميم اللي اخترته تلقائيًا، وتقدر تختار لون خاص بيه. الصورة بتتحط جواه بالشكل اللي تختاره، ولو مفيش صورة بيظهر مونوجرام بأول حرف من الاسمين.</p>
 <div class="grid">
-<label>صورة الغلاف (ارفع صورتك — بتغلب على الجاهزة) <input type="file" name="cover" accept="image/jpeg,image/png,image/webp"></label>
+<label>شكل الهيدر / الصورة<select name="header_style"><?php foreach (HEADER_STYLES as $k => $l): ?><option value="<?= $k ?>" <?= ($inv['header_style'] ?? 'photo') === $k ? 'selected' : '' ?>><?= e($l) ?></option><?php endforeach; ?></select></label>
+<label>زخرفة الخلفية<select name="header_decor"><?php foreach (HEADER_DECORS as $k => $l): ?><option value="<?= $k ?>" <?= ($inv['header_decor'] ?? 'floral') === $k ? 'selected' : '' ?>><?= e($l) ?></option><?php endforeach; ?></select></label>
+<label>لون الهيدر الخاص (اختياري)<input type="color" name="header_color" value="<?= e($inv['header_color'] ?? '#b08a3e') ?>" style="height:44px;padding:3px"></label>
+<label>&nbsp;<span><input type="checkbox" name="use_header_color" value="1" style="display:inline;width:auto" <?= !empty($inv['header_color']) ? 'checked' : '' ?>> استخدم اللون الخاص (وإلا لون التصميم)</span></label>
+</div>
+<p style="margin:10px 0 2px;font-weight:600;font-size:14px">إخفاء أجزاء من النص اللي تحت الهيدر:</p>
+<div class="qchips"><?php $hid = array_filter(explode(',', (string)($inv['hero_hide'] ?? ''))); foreach (HERO_PARTS as $k => $l): ?><label class="qchip" style="font-weight:400"><input type="checkbox" name="hide_part[]" value="<?= $k ?>" style="display:inline;width:auto" <?= in_array($k, $hid, true) ? 'checked' : '' ?>> <?= e($l) ?></label><?php endforeach; ?></div>
+<h3>الصور والموسيقى</h3>
+
+<div class="grid">
+<label>صورة الغلاف / الصورة الرئيسية <input type="file" name="cover" accept="image/jpeg,image/png,image/webp"></label>
 <label>رابط موسيقى (YouTube أو أي رابط mp3 مباشر) <input name="music_url" value="<?= $v('music_url') ?>" placeholder="https://youtu.be/... أو https://.../song.mp3"></label></div>
 <div class="card" style="background:#faf6ee;box-shadow:none;border:1px dashed #cbbf9f;margin:8px 0">
 <label>أو ارفع الأغنية كملف (mp3 / m4a / aac / ogg / wav — لحد 20 ميجا، وبتغلب على الرابط)
