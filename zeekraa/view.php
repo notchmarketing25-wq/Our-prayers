@@ -72,7 +72,7 @@ setTimeout(function(){if(i.className.indexOf('open')<0&&!window.__inviteReady){i
   <?php if ($cover): ?><div class="ph-shape"><img class="ph-img" id="photoImg" src="<?= e($cover) ?>" alt="<?= $names ?>" fetchpriority="high"></div>
   <?php else: ?><div class="ph-shape mono" aria-hidden="true"><span><?= e($ini($inv['groom'])) ?></span><i>&amp;</i><span><?= e($ini($inv['bride'])) ?></span></div><?php endif; ?>
 <?php endif; ?>
-<?php if (!empty($inv['photo_caption'])): ?><div class="photo-cap pos-<?= e($inv['caption_pos'] ?: 'bottom') ?> cs-<?= e($inv['caption_style'] ?: 'pill') ?> cc-<?= e($inv['caption_color'] ?: 'light') ?> sz-<?= e($inv['caption_size'] ?: 'md') ?>"><p><?= nl2br(e($inv['photo_caption'])) ?></p></div><?php endif; ?>
+<?php if (!empty($inv['photo_caption'])): ?><div class="photo-cap<?= $hs !== 'photo' && (!isset($inv['caption_frame']) || (int)$inv['caption_frame'] === 1) ? ' fr' : '' ?> pos-<?= e($inv['caption_pos'] ?: 'bottom') ?> cs-<?= e($inv['caption_style'] ?: 'pill') ?> cc-<?= e($inv['caption_color'] ?: 'light') ?> sz-<?= e($inv['caption_size'] ?: 'md') ?>"><p><?= nl2br(e($inv['photo_caption'])) ?></p></div><?php endif; ?>
 <span class="cue" aria-hidden="true">⌄</span></header>
 <?php endif; ?>
 <?php $showHero = count(array_diff(array_keys(HERO_PARTS), $hide)) > 0 && !(in_array('kicker', $hide) && in_array('names', $hide) && in_array('message', $hide) && in_array('date', $hide) && in_array('button', $hide)); if ($showHero): ?>

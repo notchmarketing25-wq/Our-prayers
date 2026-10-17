@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS invitations (
   header_decor VARCHAR(10) NULL,
   header_color CHAR(7) NULL,
   hero_hide VARCHAR(80) NULL,
+  caption_frame TINYINT NULL,
   groom VARCHAR(120) NOT NULL,
   bride VARCHAR(120) NOT NULL,
   message TEXT NULL,

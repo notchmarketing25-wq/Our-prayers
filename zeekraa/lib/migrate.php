@@ -10,6 +10,7 @@ function ensure_schema(): void {
         if (!$has($c)) db()->exec("ALTER TABLE invitations ADD $c $t NULL");
     foreach (['header_style' => 'VARCHAR(10)', 'header_decor' => 'VARCHAR(10)', 'header_color' => 'CHAR(7)', 'hero_hide' => 'VARCHAR(80)'] as $c => $t)
         if (!$has($c)) db()->exec("ALTER TABLE invitations ADD $c $t NULL");
+    if (!$has('caption_frame')) db()->exec('ALTER TABLE invitations ADD caption_frame TINYINT NULL');
     if (!$has('events_title')) db()->exec('ALTER TABLE invitations ADD events_title VARCHAR(80) NULL');
     if (!$has('notes')) db()->exec('ALTER TABLE invitations ADD notes TEXT NULL');
     if (!q("SHOW COLUMNS FROM events LIKE 'note'")->fetch()) db()->exec('ALTER TABLE events ADD note VARCHAR(255) NULL');

@@ -226,3 +226,23 @@ body.go .ph-shape{animation:phIn 1.5s cubic-bezier(.2,.7,.2,1) both,phFloat 7s 1
 .photo.hd-arch .cue,.photo.hd-oval .cue,.photo.hd-frame .cue{z-index:3;color:var(--h-base)}
 .hero.below{background:var(--bg)}
 @media(prefers-reduced-motion:reduce){.ph-shape,.hd-decor{opacity:1!important;animation:none!important;transform:none!important}}
+
+/* ===== الجملة تحت الأيقونة/الصورة (مع القوس والبيضاوي والإطار والمونوجرام) ===== */
+.photo.hd-arch,.photo.hd-oval,.photo.hd-frame{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:40px}
+.photo.hd-arch .photo-cap.pos-bottom,.photo.hd-oval .photo-cap.pos-bottom,.photo.hd-frame .photo-cap.pos-bottom,.photo.hd-arch .photo-cap.pos-center,.photo.hd-oval .photo-cap.pos-center,.photo.hd-frame .photo-cap.pos-center,.photo.hd-arch .photo-cap.pos-top,.photo.hd-oval .photo-cap.pos-top,.photo.hd-frame .photo-cap.pos-top{position:relative;inset:auto;top:auto;bottom:auto;transform:none;z-index:3;width:min(88vw,560px);padding:0;margin:0}
+.photo.hd-arch .photo-cap.pos-top,.photo.hd-oval .photo-cap.pos-top,.photo.hd-frame .photo-cap.pos-top{order:-1}
+.photo.hd-arch .photo-cap.cs-poster,.photo.hd-oval .photo-cap.cs-poster,.photo.hd-frame .photo-cap.cs-poster{padding-inline:0;text-align:center}
+.photo.hd-arch .photo-cap,.photo.hd-oval .photo-cap,.photo.hd-frame .photo-cap{text-align:center}
+.photo.hd-arch .photo-cap.cc-light,.photo.hd-oval .photo-cap.cc-light,.photo.hd-frame .photo-cap.cc-light{--cap:var(--ink);--shadow:transparent}
+.photo.hd-arch .photo-cap.cc-dark,.photo.hd-oval .photo-cap.cc-dark,.photo.hd-frame .photo-cap.cc-dark{--shadow:transparent}
+.photo.hd-arch .photo-cap.cc-accent,.photo.hd-oval .photo-cap.cc-accent,.photo.hd-frame .photo-cap.cc-accent{--cap:var(--h-base);--shadow:transparent}
+.photo.hd-arch .photo-cap p,.photo.hd-oval .photo-cap p,.photo.hd-frame .photo-cap p{text-shadow:none}
+.photo.hd-arch .photo-cap.cs-pill p,.photo.hd-oval .photo-cap.cs-pill p,.photo.hd-frame .photo-cap.cs-pill p{background:none;-webkit-backdrop-filter:none;backdrop-filter:none;padding:0;color:var(--cap)}
+/* الإطار بنفس لون الهيدر */
+.photo-cap.fr{padding:22px 26px!important;border:2px solid var(--h-base);border-radius:16px;background:color-mix(in srgb,var(--bg) 62%,transparent);
+ -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);outline:1px solid color-mix(in srgb,var(--h-base) 45%,transparent);outline-offset:6px;box-shadow:0 14px 34px color-mix(in srgb,#000 14%,transparent)}
+.photo-cap.fr p{width:100%}
+.photo-cap.fr.cs-poster p{font-size:clamp(1.7rem,8vw,2.6rem)}
+.photo-cap.fr.cs-poster.sz-sm p{font-size:clamp(1.3rem,6vw,1.9rem)}.photo-cap.fr.cs-poster.sz-lg p{font-size:clamp(2rem,10vw,3.2rem)}
+.photo-cap.fr.cs-script p{font-size:clamp(1.5rem,6.5vw,2.3rem)}
+.photo.hd-arch .cue,.photo.hd-oval .cue,.photo.hd-frame .cue{bottom:10px}
