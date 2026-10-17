@@ -1,6 +1,6 @@
 <?php
 require __DIR__ . '/../lib/bootstrap.php'; require __DIR__ . '/../lib/admin_layout.php'; require __DIR__ . '/../lib/upload.php'; require_admin();
-require __DIR__ . '/../lib/themes.php'; require __DIR__ . '/../lib/music.php'; require __DIR__ . '/../lib/covers.php';
+require __DIR__ . '/../lib/themes.php'; require __DIR__ . '/../lib/music.php'; require __DIR__ . '/../lib/covers.php'; require __DIR__ . '/../lib/i18n.php';
 const RESERVED = ['admin', 'install', 'uploads', 'assets', 'lib', 'rsvp', 'ics', 'panel'];
 $id = (int)($_GET['id'] ?? 0);
 $inv = $id ? q('SELECT * FROM invitations WHERE id=?', [$id])->fetch() : null;
@@ -35,8 +35,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $notes = [];
     foreach ($_POST['n_text'] ?? [] as $i => $tx) {
         $tx = mb_substr(trim($tx), 0, 400); if ($tx === '') continue;
-        $notes[] = ['icon' => mb_substr(trim($_POST['n_icon'][$i] ?? ''), 0, 4), 'title' => mb_substr(trim($_POST['n_title'][$i] ?? ''), 0, 80), 'text' => $tx];
+        $notes[] = ['title' => mb_substr(trim($_POST['n_title'][$i] ?? ''), 0, 80), 'text' => $tx];
         if (count($notes) >= 12) break;
+    }
+    $titles = [];
+    foreach (array_keys(['events' => 'المناسبات', 'notes' => 'ملاحظات وتعليمات', 'gallery' => 'لحظاتنا (المعرض)', 'rsvp' => 'تأكيد الحضور']) as $k) {
+        if (!empty($_POST['h_' . $k])) $titles[$k] = '';
+        elseif (($tt = mb_substr(trim($_POST['t_' . $k] ?? ''), 0, 80)) !== '') $titles[$k] = $tt;
     }
     $musicFile = $inv['music_file'] ?? null; $newMusic = null;
     if (!$err && !empty($_FILES['music']['name'])) { [$newMusic, $why] = save_audio($_FILES['music']); if ($why) $err = $why; }
@@ -63,9 +68,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 mb_substr(trim($_POST['intro_title'] ?? ''), 0, 160) ?: null, mb_substr(trim($_POST['intro_text'] ?? ''), 0, 255) ?: null,
                 mb_substr(trim($_POST['photo_caption'] ?? ''), 0, 255) ?: null, in_array($_POST['caption_pos'] ?? '', ['top', 'center', 'bottom'], true) ? $_POST['caption_pos'] : 'bottom',
                 $notes ? json_encode($notes, JSON_UNESCAPED_UNICODE) : null,
-                !empty($_POST['hide_events_title']) ? '' : (mb_substr(trim($_POST['events_title'] ?? ''), 0, 80) ?: null)];
-            if ($inv) { q('UPDATE invitations SET slug=?,template=?,groom=?,bride=?,message=?,music_url=?,music_file=?,cover_image=?,gallery=?,access_password=?,is_active=?,accent_color=?,owner_email=?,owner_password=?,lang=?,cover_preset=?,intro_title=?,intro_text=?,photo_caption=?,caption_pos=?,notes=?,events_title=? WHERE id=?', [...$vals, $id]); }
-            else { q('INSERT INTO invitations (slug,template,groom,bride,message,music_url,music_file,cover_image,gallery,access_password,is_active,accent_color,owner_email,owner_password,lang,cover_preset,intro_title,intro_text,photo_caption,caption_pos,notes,events_title) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', $vals); $id = (int)$pdo->lastInsertId(); }
+                null,
+                $titles ? json_encode($titles, JSON_UNESCAPED_UNICODE) : null,
+                in_array($_POST['caption_style'] ?? '', ['pill', 'poster', 'script', 'plain'], true) ? $_POST['caption_style'] : 'pill',
+                in_array($_POST['caption_color'] ?? '', ['light', 'dark', 'accent'], true) ? $_POST['caption_color'] : 'light',
+                in_array($_POST['caption_size'] ?? '', ['sm', 'md', 'lg'], true) ? $_POST['caption_size'] : 'md',
+                mb_substr(trim($_POST['page_title'] ?? ''), 0, 160) ?: null, mb_substr(trim($_POST['page_desc'] ?? ''), 0, 255) ?: null];
+            if ($inv) { q('UPDATE invitations SET slug=?,template=?,groom=?,bride=?,message=?,music_url=?,music_file=?,cover_image=?,gallery=?,access_password=?,is_active=?,accent_color=?,owner_email=?,owner_password=?,lang=?,cover_preset=?,intro_title=?,intro_text=?,photo_caption=?,caption_pos=?,notes=?,events_title=?,titles=?,caption_style=?,caption_color=?,caption_size=?,page_title=?,page_desc=? WHERE id=?', [...$vals, $id]); }
+            else { q('INSERT INTO invitations (slug,template,groom,bride,message,music_url,music_file,cover_image,gallery,access_password,is_active,accent_color,owner_email,owner_password,lang,cover_preset,intro_title,intro_text,photo_caption,caption_pos,notes,events_title,titles,caption_style,caption_color,caption_size,page_title,page_desc) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', $vals); $id = (int)$pdo->lastInsertId(); }
             q('DELETE FROM events WHERE invitation_id=?', [$id]);
             foreach ($evs as $o => $ev) q('INSERT INTO events (invitation_id,title,event_at,venue,address,map_url,note,sort_order) VALUES (?,?,?,?,?,?,?,?)', [$id, $ev[0], $ev[1], $ev[2], $ev[3], $ev[4], $ev[5] ?: null, $o]);
             $pdo->commit();
@@ -87,17 +97,31 @@ admin_header($id ? 'تعديل دعوة' : 'دعوة جديدة'); ?>
 <label>التصميم <select name="template"><?php foreach (THEMES as $k => $l): ?><option value="<?= $k ?>" <?= ($inv['template'] ?? 'royal') === $k ? 'selected' : '' ?>><?= e($l) ?></option><?php endforeach; ?></select></label>
 </div>
 <label>كلمة الدعوة / رسالة ترحيب <textarea name="message" id="msgBox" rows="3"><?= $v('message', 'يتشرف أهل العروسين بدعوتكم لحضور حفل زفافهما') ?></textarea><small class="muted">اكتب الرسالة والأسماء والأماكن بلغة الدعوة اللي اخترتها (النصوص الثابتة زي الأزرار بتتترجم تلقائيًا).</small></label>
+<h3>عناوين الأقسام وعنوان الرابط</h3>
+<p class="muted" style="margin:4px 0">غيّر عنوان أي قسم أو اخفيه. لو سبت الخانة فاضية بيظهر العنوان الافتراضي حسب لغة الدعوة.</p>
+<?php $tj = json_decode($inv['titles'] ?? '[]', true) ?: []; if (isset($inv['events_title']) && !array_key_exists('events', $tj)) $tj['events'] = $inv['events_title']; ?>
+<div class="grid">
+<?php foreach (['events' => 'المناسبات', 'notes' => 'ملاحظات وتعليمات', 'gallery' => 'لحظاتنا (المعرض)', 'rsvp' => 'تأكيد الحضور'] as $k => $l): $cur = $tj[$k] ?? null; ?>
+<label>عنوان قسم "<?= e($l) ?>"<input name="t_<?= $k ?>" value="<?= $cur !== null && $cur !== '' ? e($cur) : '' ?>" maxlength="80" placeholder="الافتراضي">
+<span style="font-weight:400;font-size:.85rem"><input type="checkbox" name="h_<?= $k ?>" value="1" style="display:inline;width:auto" <?= $cur === '' ? 'checked' : '' ?>> إخفاء العنوان</span></label>
+<?php endforeach; ?>
+</div>
+<div class="grid">
+<label>عنوان الرابط (بيظهر في تاب المتصفح وفي معاينة واتساب — فاضي = الأسماء)<input name="page_title" value="<?= $v('page_title') ?>" maxlength="160" placeholder="مثال: دعوة زفاف محمد ومريم 💍"></label>
+<label>وصف الرابط في معاينة واتساب (فاضي = رسالة الترحيب)<input name="page_desc" value="<?= $v('page_desc') ?>" maxlength="255" placeholder="مثال: يسعدنا حضوركم"></label>
+</div>
 <h3>كتابة على الشاشة الافتتاحية (الظرف) وعلى الصورة</h3>
 <div class="grid">
 <label>جملة بدل الأسماء على الظرف (اختياري — لو فاضي بتظهر الأسماء)<input name="intro_title" value="<?= $v('intro_title') ?>" maxlength="160" placeholder="مثال: دعوة زفاف محمد ومريم"></label>
 <label>سطر تحت الاسم/الجملة على الظرف (اختياري)<input name="intro_text" value="<?= $v('intro_text') ?>" maxlength="255" placeholder="مثال: 27 مارس 2027 — بنتشرف بحضوركم"></label>
 <label>جملة على صورة الغلاف (اختياري)<input name="photo_caption" value="<?= $v('photo_caption') ?>" maxlength="255" placeholder="مثال: وبدأت حكايتنا..."></label>
 <label>مكان الجملة على الصورة<select name="caption_pos"><?php foreach (['bottom' => 'تحت (أنسب — الصورة تفضل ظاهرة)', 'center' => 'في النص', 'top' => 'فوق'] as $k => $l): ?><option value="<?= $k ?>" <?= ($inv['caption_pos'] ?? 'bottom') === $k ? 'selected' : '' ?>><?= e($l) ?></option><?php endforeach; ?></select></label>
+<label>ستايل الجملة على الصورة<select name="caption_style"><?php foreach (['pill' => 'كبسولة شفافة (هادي)', 'poster' => 'بوستر — خط عريض كبير', 'script' => 'خط أنيق مائل', 'plain' => 'نص بسيط بدون خلفية'] as $k => $l): ?><option value="<?= $k ?>" <?= ($inv['caption_style'] ?? 'pill') === $k ? 'selected' : '' ?>><?= e($l) ?></option><?php endforeach; ?></select></label>
+<label>لون الجملة<select name="caption_color"><?php foreach (['light' => 'أبيض', 'dark' => 'أسود', 'accent' => 'لون الدعوة'] as $k => $l): ?><option value="<?= $k ?>" <?= ($inv['caption_color'] ?? 'light') === $k ? 'selected' : '' ?>><?= e($l) ?></option><?php endforeach; ?></select></label>
+<label>حجم الجملة<select name="caption_size"><?php foreach (['sm' => 'صغير', 'md' => 'متوسط', 'lg' => 'كبير'] as $k => $l): ?><option value="<?= $k ?>" <?= ($inv['caption_size'] ?? 'md') === $k ? 'selected' : '' ?>><?= e($l) ?></option><?php endforeach; ?></select></label>
 </div>
 <h3>المناسبات (كتب كتاب / حنة / فرح…)</h3>
-<div class="grid"><label>عنوان قسم المناسبات في الدعوة (فاضي = العنوان الافتراضي "المناسبات" / "The Events")
-<input name="events_title" value="<?= isset($inv['events_title']) && $inv['events_title'] !== '' ? e($inv['events_title']) : '' ?>" maxlength="80" placeholder="مثال: موعدنا / Save the date"></label>
-<label>&nbsp;<span><input type="checkbox" name="hide_events_title" value="1" style="display:inline;width:auto" <?= isset($inv['events_title']) && $inv['events_title'] === '' ? 'checked' : '' ?>> إخفاء العنوان تمامًا</span></label></div>
+
 <div id="events"><?php foreach ($events as $ev): ?>
 <div class="event-row grid">
 <label>العنوان <input name="ev_title[]" value="<?= e($ev['title']) ?>"></label>
@@ -113,8 +137,7 @@ admin_header($id ? 'تعديل دعوة' : 'دعوة جديدة'); ?>
 <p class="muted" style="margin:4px 0">بتظهر في قسم "ملاحظات وتعليمات" في الدعوة. اضغط على اقتراح عشان يتضاف جاهز وعدّله زي ما تحب:</p>
 <div class="qchips" id="qchips"></div>
 <div id="notes"><?php foreach ($notesList as $n): ?>
-<div class="event-row grid note-row"><label>أيقونة <input name="n_icon[]" value="<?= e($n['icon'] ?? '') ?>" maxlength="4" style="max-width:90px"></label>
-<label>العنوان <input name="n_title[]" value="<?= e($n['title'] ?? '') ?>" maxlength="80"></label>
+<div class="event-row grid note-row"><label>العنوان <input name="n_title[]" value="<?= e($n['title'] ?? '') ?>" maxlength="80"></label>
 <label style="grid-column:1/-1">النص <textarea name="n_text[]" rows="2" maxlength="400"><?= e($n['text'] ?? '') ?></textarea></label>
 <label>&nbsp;<button type="button" class="btn sm danger" onclick="this.closest('.note-row').remove()">حذف الملاحظة</button></label></div>
 <?php endforeach; ?></div>
@@ -165,8 +188,8 @@ en:[['👗','Dress code','Formal attire. We look forward to seeing you dressed t
 var box=document.getElementById('notes'),chips=document.getElementById('qchips'),sel=document.getElementById('langSel');
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')}
 function add(i,t,x){var d=document.createElement('div');d.className='event-row grid note-row';
-d.innerHTML='<label>أيقونة <input name="n_icon[]" value="'+esc(i)+'" maxlength="4" style="max-width:90px"></label><label>العنوان <input name="n_title[]" value="'+esc(t)+'" maxlength="80"></label><label style="grid-column:1/-1">النص <textarea name="n_text[]" rows="2" maxlength="400">'+esc(x)+'</textarea></label><label>&nbsp;<button type="button" class="btn sm danger" onclick="this.closest(\'.note-row\').remove()">حذف الملاحظة</button></label>';box.appendChild(d)}
-function draw(){chips.innerHTML='';P[sel.value].forEach(function(p){var b=document.createElement('button');b.type='button';b.className='qchip';b.textContent=p[0]+' '+p[1];b.onclick=function(){add(p[0],p[1],p[2])};chips.appendChild(b)})}
+d.innerHTML='<label>العنوان <input name="n_title[]" value="'+esc(t)+'" maxlength="80"></label><label style="grid-column:1/-1">النص <textarea name="n_text[]" rows="2" maxlength="400">'+esc(x)+'</textarea></label><label>&nbsp;<button type="button" class="btn sm danger" onclick="this.closest(\'.note-row\').remove()">حذف الملاحظة</button></label>';box.appendChild(d)}
+function draw(){chips.innerHTML='';P[sel.value].forEach(function(p){var b=document.createElement('button');b.type='button';b.className='qchip';b.textContent=p[1];b.onclick=function(){add(p[0],p[1],p[2])};chips.appendChild(b)})}
 document.getElementById('addNote').onclick=function(){add('✨','','')};sel.addEventListener('change',draw);draw()})();</script>
 <script>document.getElementById('addEv').onclick=()=>document.getElementById('events').append(document.getElementById('evTpl').content.cloneNode(true));</script>
 <?php admin_footer();

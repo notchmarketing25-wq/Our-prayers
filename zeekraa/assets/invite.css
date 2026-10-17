@@ -169,3 +169,24 @@ body.go .photo-cap p{animation:capIn 1.2s 1.4s cubic-bezier(.2,.7,.2,1) forwards
 .n-ic{flex:none;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-size:1.4rem;background:color-mix(in srgb,var(--accent) 18%,transparent)}
 .note h4{margin:0 0 2px;color:var(--accent);font-size:1.05rem}.note p{margin:0;line-height:1.7;font-size:.95rem}
 @media(prefers-reduced-motion:reduce){.note{opacity:1!important;transform:none!important}}
+
+/* ===== ستايلات الجملة على الصورة ===== */
+.photo-cap.cc-light{--cap:#fff;--shadow:#0009}.photo-cap.cc-dark{--cap:#111;--shadow:#fff7}.photo-cap.cc-accent{--cap:var(--accent);--shadow:#0006}
+.photo-cap.cs-pill p{color:var(--cap)}
+.photo-cap.cs-pill.cc-dark p{background:rgba(255,255,255,.38);text-shadow:none}
+.photo-cap.cs-poster{text-align:start;padding-inline:7%}
+.photo-cap.cs-poster p{display:block;max-width:100%;padding:0;border-radius:0;background:none;-webkit-backdrop-filter:none;backdrop-filter:none;color:var(--cap);text-shadow:0 2px 18px var(--shadow);
+ font-family:Anton,'Cairo',Impact,sans-serif;font-weight:900;line-height:1.12;letter-spacing:.005em;font-size:clamp(2rem,10.5vw,3.6rem)}
+body .photo-cap.cs-poster p{font-style:normal}
+html[lang=ar] .photo-cap.cs-poster p{font-family:'Cairo',Tahoma,sans-serif;font-weight:900;line-height:1.35}
+.photo-cap.cs-script p{background:none;-webkit-backdrop-filter:none;backdrop-filter:none;padding:0;color:var(--cap);text-shadow:0 2px 16px var(--shadow);
+ font-family:'Cormorant Garamond',Amiri,Georgia,serif;font-style:italic;font-weight:700;font-size:clamp(1.6rem,7.5vw,2.8rem);line-height:1.35}
+html[lang=ar] .photo-cap.cs-script p{font-style:normal;font-family:'Aref Ruqaa',Amiri,serif}
+.photo-cap.cs-plain p{background:none;-webkit-backdrop-filter:none;backdrop-filter:none;padding:0;color:var(--cap);text-shadow:0 1px 10px var(--shadow);font-weight:600;font-size:clamp(1.05rem,4.4vw,1.6rem)}
+.photo-cap.sz-sm p{font-size:calc(1em * .8)}.photo-cap.sz-lg p{font-size:calc(1em * 1.22)}
+.photo-cap.cs-poster.sz-sm p{font-size:clamp(1.5rem,8vw,2.8rem)}.photo-cap.cs-poster.sz-lg p{font-size:clamp(2.5rem,13vw,4.6rem)}
+.photo-cap.cs-pill.sz-sm p,.photo-cap.cs-pill.sz-lg p{font-size:inherit}
+.photo-cap.cs-pill.sz-sm p{font-size:clamp(.95rem,4vw,1.4rem)}.photo-cap.cs-pill.sz-lg p{font-size:clamp(1.4rem,6vw,2.3rem)}
+.photo-cap.cs-script.sz-sm p,.photo-cap.cs-plain.sz-sm p{font-size:clamp(1.05rem,4.6vw,1.8rem)}.photo-cap.cs-script.sz-lg p{font-size:clamp(2rem,9.5vw,3.6rem)}.photo-cap.cs-plain.sz-lg p{font-size:clamp(1.4rem,6vw,2.2rem)}
+.photo-cap.pos-center.cs-poster,.photo-cap.pos-center.cs-script{top:50%}
+.photo-cap.pos-bottom.cs-poster{bottom:70px}

@@ -18,16 +18,17 @@ if ($inv['access_password']) {
     $gate = empty($_SESSION['unlocked'][$inv['id']]);
 }
 $names = e($inv['groom'] . ' & ' . $inv['bride']);
+$pageTitle = !empty($inv['page_title']) ? e($inv['page_title']) : $names;
 $bodyStyle = !empty($inv['accent_color']) ? ' style="--accent:' . e($inv['accent_color']) . ';--on:' . contrast_on($inv['accent_color']) . '"' : '';
 $cover = cover_url($inv);
 ?><!doctype html>
 <html lang="<?= $L ?>" dir="<?= $dir ?>"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title><?= $names ?></title>
-<meta property="og:title" content="<?= $names ?>"><meta property="og:type" content="website">
-<meta property="og:description" content="<?= e(mb_substr($gate ? $T('private') : (string)$inv['message'], 0, 150)) ?>">
+<title><?= $pageTitle ?></title>
+<meta property="og:title" content="<?= $pageTitle ?>"><meta property="og:type" content="website">
+<meta property="og:description" content="<?= e(mb_substr($gate ? $T('private') : (string)(!empty($inv['page_desc']) ? $inv['page_desc'] : $inv['message']), 0, 200)) ?>">
 <?php if ($cover && !$gate): ?><meta property="og:image" content="<?= e($cover) ?>"><?php endif; ?>
-<link rel="stylesheet" href="<?= $L === 'en' ? 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,700;1,500&family=Montserrat:wght@400;500;600&display=swap' : 'https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;600;700&family=Aref+Ruqaa:wght@400;700&display=swap' ?>">
+<link rel="stylesheet" href="<?= $L === 'en' ? 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,700;1,500&family=Montserrat:wght@400;500;600&family=Anton&display=swap' : 'https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;600;700;900&family=Anton&family=Aref+Ruqaa:wght@400;700&display=swap' ?>">
 <link rel="stylesheet" href="<?= asset('assets/invite.css') ?>">
 </head><body class="t-<?= e($inv['template']) ?> l-<?= $L ?><?= $gate ? '' : ' locked' ?>"<?= $bodyStyle ?>>
 <?php if ($gate): ?>
@@ -58,7 +59,7 @@ i.onclick=o;i.onkeydown=function(e){if(e.key==='Enter'||e.key===' ')o()};
 setTimeout(function(){if(i.className.indexOf('open')<0&&!window.__inviteReady){i.style.opacity='.0';i.style.pointerEvents='none';b.classList.remove('locked');b.classList.add('go')}},9000)})();</script>
 <?php if ($cover): ?>
 <header class="photo" id="photo"><div class="photo-frame"><img class="photo-img" id="photoImg" src="<?= e($cover) ?>" alt="<?= $names ?>" fetchpriority="high"></div>
-<?php if (!empty($inv['photo_caption'])): ?><div class="photo-cap pos-<?= e($inv['caption_pos'] ?: 'bottom') ?>"><p><?= nl2br(e($inv['photo_caption'])) ?></p></div><?php endif; ?>
+<?php if (!empty($inv['photo_caption'])): ?><div class="photo-cap pos-<?= e($inv['caption_pos'] ?: 'bottom') ?> cs-<?= e($inv['caption_style'] ?: 'pill') ?> cc-<?= e($inv['caption_color'] ?: 'light') ?> sz-<?= e($inv['caption_size'] ?: 'md') ?>"><p><?= nl2br(e($inv['photo_caption'])) ?></p></div><?php endif; ?>
 <span class="cue" aria-hidden="true">⌄</span></header>
 <?php endif; ?>
 <section class="hero<?= $cover ? ' below' : '' ?>"><div class="hero-in">
@@ -73,7 +74,7 @@ setTimeout(function(){if(i.className.indexOf('open')<0&&!window.__inviteReady){i
 <?php if ($next): ?><section class="count"><div id="cd" data-ts="<?= (int)(new DateTime($next['event_at'], new DateTimeZone('Africa/Cairo')))->getTimestamp() ?>">
 <div><b id="cd-d">0</b><small><?= e($T('d')) ?></small></div><div><b id="cd-h">0</b><small><?= e($T('h')) ?></small></div><div><b id="cd-m">0</b><small><?= e($T('m')) ?></small></div><div><b id="cd-s">0</b><small><?= e($T('s')) ?></small></div></div></section><?php endif; ?>
 
-<section id="events" class="events"><?php $evT = $inv['events_title'] ?? null; if ($evT === null) $evT = $T('events'); if ($evT !== ''): ?><h2><?= e($evT) ?></h2><?php endif; ?>
+<section id="events" class="events"><?php $evT = sec_title($inv, 'events', $T('events')); if ($evT !== ''): ?><h2><?= e($evT) ?></h2><?php endif; ?>
 <?php foreach ($events as $ev): [$d, $t] = $ar(strtotime($ev['event_at'])); ?>
 <article class="ev"><h3><?= e($ev['title']) ?></h3><p class="when"><?= e($d) ?> · <?= e($t) ?></p>
 <?php if ($ev['venue']): ?><p class="where"><?= e($ev['venue']) ?><?= $ev['address'] ? ' — ' . e($ev['address']) : '' ?></p><?php endif; ?>
@@ -83,14 +84,13 @@ setTimeout(function(){if(i.className.indexOf('open')<0&&!window.__inviteReady){i
 <?php endforeach; ?></section>
 
 <?php $notes = json_decode($inv['notes'] ?? '[]', true) ?: []; if ($notes): ?>
-<section class="notes"><h2><?= e($T('notes')) ?></h2><div class="notes-g">
-<?php foreach ($notes as $i => $n): ?><article class="note" style="--d:<?= $i * .1 ?>s"><?php if (!empty($n['icon'])): ?><span class="n-ic"><?= e($n['icon']) ?></span><?php endif; ?>
-<div><?php if (!empty($n['title'])): ?><h4><?= e($n['title']) ?></h4><?php endif; ?><p><?= nl2br(e($n['text'])) ?></p></div></article><?php endforeach; ?>
+<section class="notes"><?php if (($nT = sec_title($inv, 'notes', $T('notes'))) !== ''): ?><h2><?= e($nT) ?></h2><?php endif; ?><div class="notes-g">
+<?php foreach ($notes as $i => $n): ?><article class="note" style="--d:<?= $i * .1 ?>s"><div><?php if (!empty($n['title'])): ?><h4><?= e($n['title']) ?></h4><?php endif; ?><p><?= nl2br(e($n['text'])) ?></p></div></article><?php endforeach; ?>
 </div></section><?php endif; ?>
 
-<?php if ($gallery): ?><section class="gal"><h2><?= e($T('moments')) ?></h2><div class="gal-g"><?php foreach ($gallery as $g): ?><img loading="lazy" tabindex="0" role="button" aria-label="<?= e($T('view_img')) ?>" src="<?= e(url('uploads/' . $g)) ?>" alt=""><?php endforeach; ?></div></section><?php endif; ?>
+<?php if ($gallery): ?><section class="gal"><?php if (($gT = sec_title($inv, 'gallery', $T('moments'))) !== ''): ?><h2><?= e($gT) ?></h2><?php endif; ?><div class="gal-g"><?php foreach ($gallery as $g): ?><img loading="lazy" tabindex="0" role="button" aria-label="<?= e($T('view_img')) ?>" src="<?= e(url('uploads/' . $g)) ?>" alt=""><?php endforeach; ?></div></section><?php endif; ?>
 
-<section id="rsvp" class="rsvp"><h2><?= e($T('rsvp')) ?></h2>
+<section id="rsvp" class="rsvp"><?php if (($rT = sec_title($inv, 'rsvp', $T('rsvp'))) !== ''): ?><h2><?= e($rT) ?></h2><?php endif; ?>
 <?php $okFlash = !empty($_SESSION['flash_ok']); unset($_SESSION['flash_ok']); if ($m = flash()): ?><p class="flash"<?= $okFlash ? ' data-ok="1"' : '' ?>><?= e($m) ?></p><?php endif; ?>
 <?php if ($mine): ?><p class="flash"><?= e($mine['attending'] ? $T('cur_yes', (int)$mine['party_size']) : $T('cur_no')) ?></p><?php endif; ?>
 <form method="post" action="<?= url('rsvp.php') ?>"><?= csrf_field() ?>

@@ -44,3 +44,11 @@ function fmt_dt(int $ts, string $lang): array {
     $mon = ['','يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
     return [$days[(int)date('w', $ts)] . ' ' . date('j', $ts) . ' ' . $mon[(int)date('n', $ts)] . ' ' . date('Y', $ts), (int)date('g', $ts) . ':' . date('i', $ts) . ' ' . (date('A', $ts) === 'AM' ? 'صباحًا' : 'مساءً')];
 }
+
+/** عنوان قسم: النص المخصص لو موجود، '' = مخفي، وإلا الافتراضي. المفاتيح: events / notes / gallery / rsvp */
+function sec_title(array $inv, string $key, string $default): string {
+    $t = json_decode($inv['titles'] ?? '[]', true) ?: [];
+    if (array_key_exists($key, $t)) return (string)$t[$key];
+    if ($key === 'events' && isset($inv['events_title'])) return (string)$inv['events_title']; // توافق مع النسخة القديمة
+    return $default;
+}
