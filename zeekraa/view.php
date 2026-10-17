@@ -73,13 +73,20 @@ setTimeout(function(){if(i.className.indexOf('open')<0&&!window.__inviteReady){i
 <?php if ($next): ?><section class="count"><div id="cd" data-ts="<?= (int)(new DateTime($next['event_at'], new DateTimeZone('Africa/Cairo')))->getTimestamp() ?>">
 <div><b id="cd-d">0</b><small><?= e($T('d')) ?></small></div><div><b id="cd-h">0</b><small><?= e($T('h')) ?></small></div><div><b id="cd-m">0</b><small><?= e($T('m')) ?></small></div><div><b id="cd-s">0</b><small><?= e($T('s')) ?></small></div></div></section><?php endif; ?>
 
-<section id="events" class="events"><h2><?= e($T('events')) ?></h2>
+<section id="events" class="events"><?php $evT = $inv['events_title'] ?? null; if ($evT === null) $evT = $T('events'); if ($evT !== ''): ?><h2><?= e($evT) ?></h2><?php endif; ?>
 <?php foreach ($events as $ev): [$d, $t] = $ar(strtotime($ev['event_at'])); ?>
 <article class="ev"><h3><?= e($ev['title']) ?></h3><p class="when"><?= e($d) ?> · <?= e($t) ?></p>
 <?php if ($ev['venue']): ?><p class="where"><?= e($ev['venue']) ?><?= $ev['address'] ? ' — ' . e($ev['address']) : '' ?></p><?php endif; ?>
+<?php if (!empty($ev['note'])): ?><p class="ev-note"><?= e($ev['note']) ?></p><?php endif; ?>
 <p class="acts"><?php if ($ev['map_url']): ?><a class="btn-i sm" target="_blank" rel="noopener" href="<?= e($ev['map_url']) ?>"><?= e($T('map')) ?></a><?php endif; ?>
 <a class="btn-i sm ghost" href="<?= url('ics.php?e=' . $ev['id']) ?>"><?= e($T('cal')) ?></a></p></article>
 <?php endforeach; ?></section>
+
+<?php $notes = json_decode($inv['notes'] ?? '[]', true) ?: []; if ($notes): ?>
+<section class="notes"><h2><?= e($T('notes')) ?></h2><div class="notes-g">
+<?php foreach ($notes as $i => $n): ?><article class="note" style="--d:<?= $i * .1 ?>s"><?php if (!empty($n['icon'])): ?><span class="n-ic"><?= e($n['icon']) ?></span><?php endif; ?>
+<div><?php if (!empty($n['title'])): ?><h4><?= e($n['title']) ?></h4><?php endif; ?><p><?= nl2br(e($n['text'])) ?></p></div></article><?php endforeach; ?>
+</div></section><?php endif; ?>
 
 <?php if ($gallery): ?><section class="gal"><h2><?= e($T('moments')) ?></h2><div class="gal-g"><?php foreach ($gallery as $g): ?><img loading="lazy" tabindex="0" role="button" aria-label="<?= e($T('view_img')) ?>" src="<?= e(url('uploads/' . $g)) ?>" alt=""><?php endforeach; ?></div></section><?php endif; ?>
 

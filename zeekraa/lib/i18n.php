@@ -3,7 +3,7 @@
 const I18N = [
     'ar' => [
         'invited' => 'نتشرف بدعوتكم', 'dear' => 'أهلًا %s', 'details' => 'التفاصيل', 'd' => 'يوم', 'h' => 'ساعة', 'm' => 'دقيقة', 's' => 'ثانية',
-        'events' => 'المناسبات', 'map' => 'افتح الخريطة', 'cal' => 'أضف للتقويم', 'moments' => 'لحظاتنا', 'view_img' => 'عرض الصورة',
+        'events' => 'المناسبات', 'notes' => 'ملاحظات وتعليمات', 'map' => 'افتح الخريطة', 'cal' => 'أضف للتقويم', 'moments' => 'لحظاتنا', 'view_img' => 'عرض الصورة',
         'rsvp' => 'تأكيد الحضور', 'name' => 'الاسم', 'phone' => 'رقم الموبايل (اختياري)', 'attend' => 'هحضر إن شاء الله', 'decline' => 'أعتذر',
         'party' => 'عدد الأفراد', 'note' => 'رسالة للعروسين (اختياري)', 'send' => 'إرسال',
         'cur_yes' => 'ردك الحالي: حاضر (%d) — تقدر تغيّره من تحت.', 'cur_no' => 'ردك الحالي: معتذر — تقدر تغيّره من تحت.',
@@ -18,7 +18,7 @@ const I18N = [
     ],
     'en' => [
         'invited' => 'You are cordially invited', 'dear' => 'Dear %s', 'details' => 'Details', 'd' => 'Days', 'h' => 'Hours', 'm' => 'Minutes', 's' => 'Seconds',
-        'events' => 'The Events', 'map' => 'Open map', 'cal' => 'Add to calendar', 'moments' => 'Our moments', 'view_img' => 'View photo',
+        'events' => 'The Events', 'notes' => 'Good to know', 'map' => 'Open map', 'cal' => 'Add to calendar', 'moments' => 'Our moments', 'view_img' => 'View photo',
         'rsvp' => 'RSVP', 'name' => 'Your name', 'phone' => 'Phone number (optional)', 'attend' => 'Joyfully accepts', 'decline' => 'Regretfully declines',
         'party' => 'Number of guests', 'note' => 'A message for the couple (optional)', 'send' => 'Send',
         'cur_yes' => 'Your reply: attending (%d) — you can change it below.', 'cur_no' => 'Your reply: not attending — you can change it below.',

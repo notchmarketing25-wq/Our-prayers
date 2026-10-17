@@ -5,7 +5,8 @@ const RESERVED = ['admin', 'install', 'uploads', 'assets', 'lib', 'rsvp', 'ics',
 $id = (int)($_GET['id'] ?? 0);
 $inv = $id ? q('SELECT * FROM invitations WHERE id=?', [$id])->fetch() : null;
 if ($id && !$inv) { http_response_code(404); exit('مش موجودة'); }
-$events = $inv ? q('SELECT * FROM events WHERE invitation_id=? ORDER BY sort_order,event_at', [$id])->fetchAll() : [['title' => 'الفرح', 'event_at' => '', 'venue' => '', 'address' => '', 'map_url' => '']];
+$events = $inv ? q('SELECT * FROM events WHERE invitation_id=? ORDER BY sort_order,event_at', [$id])->fetchAll() : [['title' => 'الفرح', 'event_at' => '', 'venue' => '', 'address' => '', 'map_url' => '', 'note' => '']];
+$notesList = $inv ? (json_decode($inv['notes'] ?? '[]', true) ?: []) : [];
 $gallery = $inv ? (json_decode($inv['gallery'] ?? '[]', true) ?: []) : [];
 $err = null;
 
@@ -18,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     foreach ($_POST['ev_title'] ?? [] as $i => $t) {
         $at = str_replace('T', ' ', trim($_POST['ev_at'][$i] ?? ''));
         if (trim($t) === '' || $at === '') continue;
-        $evs[] = [trim($t), strlen($at) === 16 ? $at . ':00' : $at, trim($_POST['ev_venue'][$i] ?? ''), trim($_POST['ev_address'][$i] ?? ''), safe_url($_POST['ev_map'][$i] ?? '')];
+        $evs[] = [trim($t), strlen($at) === 16 ? $at . ':00' : $at, trim($_POST['ev_venue'][$i] ?? ''), trim($_POST['ev_address'][$i] ?? ''), safe_url($_POST['ev_map'][$i] ?? ''), mb_substr(trim($_POST['ev_note'][$i] ?? ''), 0, 255)];
     }
     if (!preg_match('/^[a-z0-9-]{3,60}$/', $slug) || in_array($slug, RESERVED, true)) $err = 'الرابط لازم حروف إنجليزي صغيرة/أرقام/شرطة (3 حروف على الأقل) ومش كلمة محجوزة.';
     elseif ($groom === '' || $bride === '') $err = 'اسم العريس والعروسة مطلوبين.';
@@ -31,6 +32,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$err && $ownerPw !== '' && strlen($ownerPw) < 6) $err = 'كلمة سر لوحة العميل لازم 6 حروف على الأقل.';
     if (!$err && $ownerEmail !== '' && $ownerPw === '' && empty($inv['owner_password'])) $err = 'حدد كلمة سر للوحة العميل (اضغط توليد).';
     $accent = (!empty($_POST['use_accent']) && preg_match('/^#[0-9a-fA-F]{6}$/', $_POST['accent_color'] ?? '')) ? strtolower($_POST['accent_color']) : null;
+    $notes = [];
+    foreach ($_POST['n_text'] ?? [] as $i => $tx) {
+        $tx = mb_substr(trim($tx), 0, 400); if ($tx === '') continue;
+        $notes[] = ['icon' => mb_substr(trim($_POST['n_icon'][$i] ?? ''), 0, 4), 'title' => mb_substr(trim($_POST['n_title'][$i] ?? ''), 0, 80), 'text' => $tx];
+        if (count($notes) >= 12) break;
+    }
     $musicFile = $inv['music_file'] ?? null; $newMusic = null;
     if (!$err && !empty($_FILES['music']['name'])) { [$newMusic, $why] = save_audio($_FILES['music']); if ($why) $err = $why; }
     if (!$err) {
@@ -54,16 +61,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $ownerEmail === '' ? null : ($ownerPw !== '' ? password_hash($ownerPw, PASSWORD_DEFAULT) : ($inv['owner_password'] ?? null)),
                 ($_POST['lang'] ?? 'ar') === 'en' ? 'en' : 'ar', isset(COVER_PRESETS[$_POST['cover_preset'] ?? '']) ? $_POST['cover_preset'] : null,
                 mb_substr(trim($_POST['intro_title'] ?? ''), 0, 160) ?: null, mb_substr(trim($_POST['intro_text'] ?? ''), 0, 255) ?: null,
-                mb_substr(trim($_POST['photo_caption'] ?? ''), 0, 255) ?: null, in_array($_POST['caption_pos'] ?? '', ['top', 'center', 'bottom'], true) ? $_POST['caption_pos'] : 'bottom'];
-            if ($inv) { q('UPDATE invitations SET slug=?,template=?,groom=?,bride=?,message=?,music_url=?,music_file=?,cover_image=?,gallery=?,access_password=?,is_active=?,accent_color=?,owner_email=?,owner_password=?,lang=?,cover_preset=?,intro_title=?,intro_text=?,photo_caption=?,caption_pos=? WHERE id=?', [...$vals, $id]); }
-            else { q('INSERT INTO invitations (slug,template,groom,bride,message,music_url,music_file,cover_image,gallery,access_password,is_active,accent_color,owner_email,owner_password,lang,cover_preset,intro_title,intro_text,photo_caption,caption_pos) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', $vals); $id = (int)$pdo->lastInsertId(); }
+                mb_substr(trim($_POST['photo_caption'] ?? ''), 0, 255) ?: null, in_array($_POST['caption_pos'] ?? '', ['top', 'center', 'bottom'], true) ? $_POST['caption_pos'] : 'bottom',
+                $notes ? json_encode($notes, JSON_UNESCAPED_UNICODE) : null,
+                !empty($_POST['hide_events_title']) ? '' : (mb_substr(trim($_POST['events_title'] ?? ''), 0, 80) ?: null)];
+            if ($inv) { q('UPDATE invitations SET slug=?,template=?,groom=?,bride=?,message=?,music_url=?,music_file=?,cover_image=?,gallery=?,access_password=?,is_active=?,accent_color=?,owner_email=?,owner_password=?,lang=?,cover_preset=?,intro_title=?,intro_text=?,photo_caption=?,caption_pos=?,notes=?,events_title=? WHERE id=?', [...$vals, $id]); }
+            else { q('INSERT INTO invitations (slug,template,groom,bride,message,music_url,music_file,cover_image,gallery,access_password,is_active,accent_color,owner_email,owner_password,lang,cover_preset,intro_title,intro_text,photo_caption,caption_pos,notes,events_title) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', $vals); $id = (int)$pdo->lastInsertId(); }
             q('DELETE FROM events WHERE invitation_id=?', [$id]);
-            foreach ($evs as $o => $ev) q('INSERT INTO events (invitation_id,title,event_at,venue,address,map_url,sort_order) VALUES (?,?,?,?,?,?,?)', [$id, $ev[0], $ev[1], $ev[2], $ev[3], $ev[4], $o]);
+            foreach ($evs as $o => $ev) q('INSERT INTO events (invitation_id,title,event_at,venue,address,map_url,note,sort_order) VALUES (?,?,?,?,?,?,?,?)', [$id, $ev[0], $ev[1], $ev[2], $ev[3], $ev[4], $ev[5] ?: null, $o]);
             $pdo->commit();
             flash('تم الحفظ ✓' . ($warn ? ' — بس فيه صور ماترفعتش: ' . implode(' | ', $warn) : '')); redirect(url('admin/'));
         } catch (Throwable $t) { $pdo->rollBack(); $err = 'خطأ أثناء الحفظ: ' . $t->getMessage(); }
     }
-    $inv = array_merge($inv ?? [], $_POST); $events = array_map(fn($e) => ['title' => $e[0], 'event_at' => $e[1], 'venue' => $e[2], 'address' => $e[3], 'map_url' => $e[4]], $evs ?: $events);
+    $inv = array_merge($inv ?? [], $_POST); $events = array_map(fn($e) => ['title' => $e[0], 'event_at' => $e[1], 'venue' => $e[2], 'address' => $e[3], 'map_url' => $e[4], 'note' => $e[5] ?? ''], $evs ?: $events);
 }
 $v = fn($k, $d = '') => e($inv[$k] ?? $d);
 admin_header($id ? 'تعديل دعوة' : 'دعوة جديدة'); ?>
@@ -86,6 +95,9 @@ admin_header($id ? 'تعديل دعوة' : 'دعوة جديدة'); ?>
 <label>مكان الجملة على الصورة<select name="caption_pos"><?php foreach (['bottom' => 'تحت (أنسب — الصورة تفضل ظاهرة)', 'center' => 'في النص', 'top' => 'فوق'] as $k => $l): ?><option value="<?= $k ?>" <?= ($inv['caption_pos'] ?? 'bottom') === $k ? 'selected' : '' ?>><?= e($l) ?></option><?php endforeach; ?></select></label>
 </div>
 <h3>المناسبات (كتب كتاب / حنة / فرح…)</h3>
+<div class="grid"><label>عنوان قسم المناسبات في الدعوة (فاضي = العنوان الافتراضي "المناسبات" / "The Events")
+<input name="events_title" value="<?= isset($inv['events_title']) && $inv['events_title'] !== '' ? e($inv['events_title']) : '' ?>" maxlength="80" placeholder="مثال: موعدنا / Save the date"></label>
+<label>&nbsp;<span><input type="checkbox" name="hide_events_title" value="1" style="display:inline;width:auto" <?= isset($inv['events_title']) && $inv['events_title'] === '' ? 'checked' : '' ?>> إخفاء العنوان تمامًا</span></label></div>
 <div id="events"><?php foreach ($events as $ev): ?>
 <div class="event-row grid">
 <label>العنوان <input name="ev_title[]" value="<?= e($ev['title']) ?>"></label>
@@ -93,9 +105,20 @@ admin_header($id ? 'تعديل دعوة' : 'دعوة جديدة'); ?>
 <label>المكان <input name="ev_venue[]" value="<?= e($ev['venue']) ?>"></label>
 <label>العنوان التفصيلي <input name="ev_address[]" value="<?= e($ev['address']) ?>"></label>
 <label>رابط Google Maps <input name="ev_map[]" value="<?= e($ev['map_url']) ?>" placeholder="https://maps.app.goo.gl/..."></label>
+<label>ملاحظة على المناسبة (اختياري) <input name="ev_note[]" value="<?= e($ev['note'] ?? '') ?>" maxlength="255" placeholder="مثال: كود اللبس رسمي — الحضور 7 مساءً"></label>
 <label>&nbsp;<button type="button" class="btn sm danger" onclick="this.closest('.event-row').remove()">حذف المناسبة</button></label></div>
 <?php endforeach; ?></div>
 <button type="button" class="btn sec sm" id="addEv">+ مناسبة</button>
+<h3>ملاحظات وتعليمات للضيوف</h3>
+<p class="muted" style="margin:4px 0">بتظهر في قسم "ملاحظات وتعليمات" في الدعوة. اضغط على اقتراح عشان يتضاف جاهز وعدّله زي ما تحب:</p>
+<div class="qchips" id="qchips"></div>
+<div id="notes"><?php foreach ($notesList as $n): ?>
+<div class="event-row grid note-row"><label>أيقونة <input name="n_icon[]" value="<?= e($n['icon'] ?? '') ?>" maxlength="4" style="max-width:90px"></label>
+<label>العنوان <input name="n_title[]" value="<?= e($n['title'] ?? '') ?>" maxlength="80"></label>
+<label style="grid-column:1/-1">النص <textarea name="n_text[]" rows="2" maxlength="400"><?= e($n['text'] ?? '') ?></textarea></label>
+<label>&nbsp;<button type="button" class="btn sm danger" onclick="this.closest('.note-row').remove()">حذف الملاحظة</button></label></div>
+<?php endforeach; ?></div>
+<button type="button" class="btn sec sm" id="addNote">+ ملاحظة فاضية</button>
 <h3>الصور والموسيقى</h3>
 <p class="muted" style="margin:4px 0">صورة غلاف جاهزة (بتظهر لو ماترفعتش صورة):</p>
 <div class="presets"><label class="preset"><input type="radio" name="cover_preset" value="" <?= empty($inv['cover_preset']) ? 'checked' : '' ?>><span class="pv none">بدون</span></label>
@@ -132,8 +155,18 @@ admin_header($id ? 'تعديل دعوة' : 'دعوة جديدة'); ?>
 <label>العنوان <input name="ev_title[]"></label><label>الميعاد <input type="datetime-local" name="ev_at[]"></label>
 <label>المكان <input name="ev_venue[]"></label><label>العنوان التفصيلي <input name="ev_address[]"></label>
 <label>رابط Google Maps <input name="ev_map[]"></label>
+<label>ملاحظة على المناسبة (اختياري) <input name="ev_note[]" maxlength="255"></label>
 <label>&nbsp;<button type="button" class="btn sm danger" onclick="this.closest('.event-row').remove()">حذف المناسبة</button></label></div></template>
 <script>(function(){var s=document.getElementById('langSel'),m=document.getElementById('msgBox'),D={ar:'يتشرف أهل العروسين بدعوتكم لحضور حفل زفافهما',en:'Together with their families, they joyfully invite you to celebrate their wedding.'};
 s.onchange=function(){var o=s.value==='en'?'ar':'en';if(!m.value.trim()||m.value.trim()===D[o])m.value=D[s.value]}})();</script>
+<script>(function(){
+var P={ar:[['👗','كود اللبس','الكود رسمي، نتشرف بأناقتكم.'],['🚗','ركن السيارات','يتوفر ركن للسيارات أمام القاعة.'],['🕖','ميعاد الحضور','برجاء الحضور قبل الميعاد بنصف ساعة.'],['🎁','الهدايا','وجودكم هو أجمل هدية.'],['👶','الأطفال','الحفل للكبار فقط — شاكرين تفهمكم.'],['📵','التصوير','نرجو الاستمتاع باللحظة وإيقاف التصوير أثناء المراسم.']],
+en:[['👗','Dress code','Formal attire. We look forward to seeing you dressed to impress.'],['🚗','Parking','Free parking is available in front of the venue.'],['🕖','Arrival time','Kindly arrive 30 minutes before the ceremony.'],['🎁','Gifts','Your presence is the greatest gift of all.'],['👶','Children','This is an adults-only celebration. Thank you for understanding.'],['📵','Photography','We kindly ask you to enjoy the moment and keep phones away during the ceremony.']]};
+var box=document.getElementById('notes'),chips=document.getElementById('qchips'),sel=document.getElementById('langSel');
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')}
+function add(i,t,x){var d=document.createElement('div');d.className='event-row grid note-row';
+d.innerHTML='<label>أيقونة <input name="n_icon[]" value="'+esc(i)+'" maxlength="4" style="max-width:90px"></label><label>العنوان <input name="n_title[]" value="'+esc(t)+'" maxlength="80"></label><label style="grid-column:1/-1">النص <textarea name="n_text[]" rows="2" maxlength="400">'+esc(x)+'</textarea></label><label>&nbsp;<button type="button" class="btn sm danger" onclick="this.closest(\'.note-row\').remove()">حذف الملاحظة</button></label>';box.appendChild(d)}
+function draw(){chips.innerHTML='';P[sel.value].forEach(function(p){var b=document.createElement('button');b.type='button';b.className='qchip';b.textContent=p[0]+' '+p[1];b.onclick=function(){add(p[0],p[1],p[2])};chips.appendChild(b)})}
+document.getElementById('addNote').onclick=function(){add('✨','','')};sel.addEventListener('change',draw);draw()})();</script>
 <script>document.getElementById('addEv').onclick=()=>document.getElementById('events').append(document.getElementById('evTpl').content.cloneNode(true));</script>
 <?php admin_footer();

@@ -51,7 +51,7 @@
 
   // الكشف عند التمرير + تتابع الصور
   var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.15});
-  document.querySelectorAll('.ev,.gal,.rsvp,.count,.events h2').forEach(function(el,i){el.classList.add('rv');io.observe(el)});
+  document.querySelectorAll('.ev,.gal,.rsvp,.count,.events h2,.notes').forEach(function(el,i){el.classList.add('rv');io.observe(el)});
   document.querySelectorAll('.ev').forEach(function(el,i){el.style.setProperty('--d',(i%4)*.12+'s')});
   document.querySelectorAll('.gal-g img').forEach(function(el,i){el.style.setProperty('--d',(i*.07)+'s')});
 

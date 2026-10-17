@@ -22,3 +22,7 @@ table{width:100%;border-collapse:collapse}th,td{padding:8px;text-align:start;bor
 .preset small{display:block;font-size:.72rem;color:#666;max-width:78px;margin:3px auto 0;line-height:1.2}
 .preset input:checked+.pv{border-color:#1f3a2e;transform:translateY(-3px);box-shadow:0 6px 14px #0003}
 .preset:hover .pv{transform:translateY(-2px)}
+
+.qchips{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 10px}
+.qchip{border:1px solid #cbbf9f;background:#fff;border-radius:999px;padding:5px 14px;font:inherit;font-size:.88rem;cursor:pointer;transition:.2s}
+.qchip:hover{background:#1f3a2e;color:#fff;border-color:#1f3a2e}

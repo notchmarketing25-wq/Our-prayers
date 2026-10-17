@@ -14,6 +14,8 @@ CREATE TABLE IF NOT EXISTS invitations (
   intro_text VARCHAR(255) NULL,
   photo_caption VARCHAR(255) NULL,
   caption_pos VARCHAR(8) NULL,
+  notes TEXT NULL,
+  events_title VARCHAR(80) NULL,
   groom VARCHAR(120) NOT NULL,
   bride VARCHAR(120) NOT NULL,
   message TEXT NULL,
@@ -36,6 +38,7 @@ CREATE TABLE IF NOT EXISTS events (
   venue VARCHAR(190) NULL,
   address VARCHAR(255) NULL,
   map_url VARCHAR(500) NULL,
+  note VARCHAR(255) NULL,
   sort_order INT NOT NULL DEFAULT 0,
   FOREIGN KEY (invitation_id) REFERENCES invitations(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
