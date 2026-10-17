@@ -52,9 +52,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             $vals = [$slug, $tpl, $groom, $bride, trim($_POST['message'] ?? ''), safe_url($_POST['music_url'] ?? ''), $musicFile, $cover, json_encode(array_values($gallery)), $accessHash, empty($_POST['is_active']) ? 0 : 1, $accent, $ownerEmail ?: null,
                 $ownerEmail === '' ? null : ($ownerPw !== '' ? password_hash($ownerPw, PASSWORD_DEFAULT) : ($inv['owner_password'] ?? null)),
-                ($_POST['lang'] ?? 'ar') === 'en' ? 'en' : 'ar', isset(COVER_PRESETS[$_POST['cover_preset'] ?? '']) ? $_POST['cover_preset'] : null];
-            if ($inv) { q('UPDATE invitations SET slug=?,template=?,groom=?,bride=?,message=?,music_url=?,music_file=?,cover_image=?,gallery=?,access_password=?,is_active=?,accent_color=?,owner_email=?,owner_password=?,lang=?,cover_preset=? WHERE id=?', [...$vals, $id]); }
-            else { q('INSERT INTO invitations (slug,template,groom,bride,message,music_url,music_file,cover_image,gallery,access_password,is_active,accent_color,owner_email,owner_password,lang,cover_preset) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', $vals); $id = (int)$pdo->lastInsertId(); }
+                ($_POST['lang'] ?? 'ar') === 'en' ? 'en' : 'ar', isset(COVER_PRESETS[$_POST['cover_preset'] ?? '']) ? $_POST['cover_preset'] : null,
+                mb_substr(trim($_POST['intro_title'] ?? ''), 0, 160) ?: null, mb_substr(trim($_POST['intro_text'] ?? ''), 0, 255) ?: null,
+                mb_substr(trim($_POST['photo_caption'] ?? ''), 0, 255) ?: null, in_array($_POST['caption_pos'] ?? '', ['top', 'center', 'bottom'], true) ? $_POST['caption_pos'] : 'bottom'];
+            if ($inv) { q('UPDATE invitations SET slug=?,template=?,groom=?,bride=?,message=?,music_url=?,music_file=?,cover_image=?,gallery=?,access_password=?,is_active=?,accent_color=?,owner_email=?,owner_password=?,lang=?,cover_preset=?,intro_title=?,intro_text=?,photo_caption=?,caption_pos=? WHERE id=?', [...$vals, $id]); }
+            else { q('INSERT INTO invitations (slug,template,groom,bride,message,music_url,music_file,cover_image,gallery,access_password,is_active,accent_color,owner_email,owner_password,lang,cover_preset,intro_title,intro_text,photo_caption,caption_pos) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', $vals); $id = (int)$pdo->lastInsertId(); }
             q('DELETE FROM events WHERE invitation_id=?', [$id]);
             foreach ($evs as $o => $ev) q('INSERT INTO events (invitation_id,title,event_at,venue,address,map_url,sort_order) VALUES (?,?,?,?,?,?,?)', [$id, $ev[0], $ev[1], $ev[2], $ev[3], $ev[4], $o]);
             $pdo->commit();
@@ -76,6 +78,13 @@ admin_header($id ? 'تعديل دعوة' : 'دعوة جديدة'); ?>
 <label>التصميم <select name="template"><?php foreach (THEMES as $k => $l): ?><option value="<?= $k ?>" <?= ($inv['template'] ?? 'royal') === $k ? 'selected' : '' ?>><?= e($l) ?></option><?php endforeach; ?></select></label>
 </div>
 <label>كلمة الدعوة / رسالة ترحيب <textarea name="message" id="msgBox" rows="3"><?= $v('message', 'يتشرف أهل العروسين بدعوتكم لحضور حفل زفافهما') ?></textarea><small class="muted">اكتب الرسالة والأسماء والأماكن بلغة الدعوة اللي اخترتها (النصوص الثابتة زي الأزرار بتتترجم تلقائيًا).</small></label>
+<h3>كتابة على الشاشة الافتتاحية (الظرف) وعلى الصورة</h3>
+<div class="grid">
+<label>جملة بدل الأسماء على الظرف (اختياري — لو فاضي بتظهر الأسماء)<input name="intro_title" value="<?= $v('intro_title') ?>" maxlength="160" placeholder="مثال: دعوة زفاف محمد ومريم"></label>
+<label>سطر تحت الاسم/الجملة على الظرف (اختياري)<input name="intro_text" value="<?= $v('intro_text') ?>" maxlength="255" placeholder="مثال: 27 مارس 2027 — بنتشرف بحضوركم"></label>
+<label>جملة على صورة الغلاف (اختياري)<input name="photo_caption" value="<?= $v('photo_caption') ?>" maxlength="255" placeholder="مثال: وبدأت حكايتنا..."></label>
+<label>مكان الجملة على الصورة<select name="caption_pos"><?php foreach (['bottom' => 'تحت (أنسب — الصورة تفضل ظاهرة)', 'center' => 'في النص', 'top' => 'فوق'] as $k => $l): ?><option value="<?= $k ?>" <?= ($inv['caption_pos'] ?? 'bottom') === $k ? 'selected' : '' ?>><?= e($l) ?></option><?php endforeach; ?></select></label>
+</div>
 <h3>المناسبات (كتب كتاب / حنة / فرح…)</h3>
 <div id="events"><?php foreach ($events as $ev): ?>
 <div class="event-row grid">

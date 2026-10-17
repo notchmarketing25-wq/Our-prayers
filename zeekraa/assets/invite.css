@@ -145,3 +145,17 @@ body.go .orn path,body.go .orn circle{animation:draw 2s 1s forwards}@keyframes d
 .l-en .ev.rv.in{transform:none}
 .l-en .lb-n{left:auto;right:12px}.l-en .lb-p{right:auto;left:12px}
 .l-en .count small,.l-en .btn-i,.l-en .in-hint{letter-spacing:.06em}
+
+/* ===== كتابة على الظرف وعلى الصورة ===== */
+.in-names{text-align:center;padding:0 24px;line-height:1.5;max-width:92vw}
+.in-text{margin:-6px 0 0;padding:0 28px;text-align:center;max-width:92vw;color:var(--ink);opacity:.8;font-size:1.02rem;line-height:1.7;animation:rise2 1s .3s both}
+@keyframes rise2{from{opacity:0;transform:translateY(10px)}to{opacity:.8;transform:none}}
+.photo-cap{position:absolute;inset-inline:0;z-index:2;text-align:center;padding:0 22px;pointer-events:none}
+.photo-cap.pos-bottom{bottom:58px}.photo-cap.pos-top{top:34px}.photo-cap.pos-center{top:50%;transform:translateY(-50%)}
+.photo-cap p{display:inline-block;margin:0;max-width:min(92%,620px);padding:10px 24px;border-radius:22px;color:#fff;line-height:1.7;
+ font-family:Amiri,'Aref Ruqaa',serif;font-size:clamp(1.15rem,4.8vw,1.8rem);font-weight:700;text-shadow:0 2px 14px #0008;
+ background:rgba(0,0,0,.26);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);opacity:0;transform:translateY(16px)}
+.l-en .photo-cap p{font-family:'Cormorant Garamond',Georgia,serif;font-size:clamp(1.25rem,5vw,2rem);letter-spacing:.03em;font-style:italic}
+body.go .photo-cap p{animation:capIn 1.2s 1.4s cubic-bezier(.2,.7,.2,1) forwards}
+@keyframes capIn{to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.photo-cap p,.in-text{opacity:1!important;transform:none!important}}
