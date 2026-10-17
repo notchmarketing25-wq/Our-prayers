@@ -1,6 +1,6 @@
 <?php
 require __DIR__ . '/../lib/bootstrap.php'; require __DIR__ . '/../lib/admin_layout.php'; require __DIR__ . '/../lib/upload.php'; require_admin();
-require __DIR__ . '/../lib/themes.php';
+require __DIR__ . '/../lib/themes.php'; require __DIR__ . '/../lib/music.php';
 const RESERVED = ['admin', 'install', 'uploads', 'assets', 'lib', 'rsvp', 'ics', 'panel'];
 $id = (int)($_GET['id'] ?? 0);
 $inv = $id ? q('SELECT * FROM invitations WHERE id=?', [$id])->fetch() : null;
@@ -31,20 +31,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$err && $ownerPw !== '' && strlen($ownerPw) < 6) $err = 'كلمة سر لوحة العميل لازم 6 حروف على الأقل.';
     if (!$err && $ownerEmail !== '' && $ownerPw === '' && empty($inv['owner_password'])) $err = 'حدد كلمة سر للوحة العميل (اضغط توليد).';
     $accent = (!empty($_POST['use_accent']) && preg_match('/^#[0-9a-fA-F]{6}$/', $_POST['accent_color'] ?? '')) ? strtolower($_POST['accent_color']) : null;
+    $musicFile = $inv['music_file'] ?? null; $newMusic = null;
+    if (!$err && !empty($_FILES['music']['name'])) { [$newMusic, $why] = save_audio($_FILES['music']); if ($why) $err = $why; }
     if (!$err) {
         $pdo = db(); $pdo->beginTransaction();
         try {
             $pw = $_POST['access_password'] ?? '';
             $accessHash = $inv['access_password'] ?? null;
             if (!empty($_POST['clear_password'])) $accessHash = null; elseif ($pw !== '') $accessHash = password_hash($pw, PASSWORD_DEFAULT);
+            if ($newMusic) { delete_upload($musicFile); $musicFile = $newMusic; }
+            elseif (!empty($_POST['remove_music'])) { delete_upload($musicFile); $musicFile = null; }
             $cover = $inv['cover_image'] ?? null;
             if (!empty($_FILES['cover']['name']) && ($n = save_image($_FILES['cover']))) { delete_upload($cover); $cover = $n; }
             foreach ((array)($_POST['remove_img'] ?? []) as $r) { if (($k = array_search($r, $gallery, true)) !== false) { delete_upload($r); unset($gallery[$k]); } }
             foreach (reorder_files($_FILES['gallery'] ?? []) as $f) if ($f['name'] && count($gallery) < 12 && ($n = save_image($f))) $gallery[] = $n;
-            $vals = [$slug, $tpl, $groom, $bride, trim($_POST['message'] ?? ''), safe_url($_POST['music_url'] ?? ''), $cover, json_encode(array_values($gallery)), $accessHash, empty($_POST['is_active']) ? 0 : 1, $accent, $ownerEmail ?: null,
+            $vals = [$slug, $tpl, $groom, $bride, trim($_POST['message'] ?? ''), safe_url($_POST['music_url'] ?? ''), $musicFile, $cover, json_encode(array_values($gallery)), $accessHash, empty($_POST['is_active']) ? 0 : 1, $accent, $ownerEmail ?: null,
                 $ownerEmail === '' ? null : ($ownerPw !== '' ? password_hash($ownerPw, PASSWORD_DEFAULT) : ($inv['owner_password'] ?? null))];
-            if ($inv) { q('UPDATE invitations SET slug=?,template=?,groom=?,bride=?,message=?,music_url=?,cover_image=?,gallery=?,access_password=?,is_active=?,accent_color=?,owner_email=?,owner_password=? WHERE id=?', [...$vals, $id]); }
-            else { q('INSERT INTO invitations (slug,template,groom,bride,message,music_url,cover_image,gallery,access_password,is_active,accent_color,owner_email,owner_password) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)', $vals); $id = (int)$pdo->lastInsertId(); }
+            if ($inv) { q('UPDATE invitations SET slug=?,template=?,groom=?,bride=?,message=?,music_url=?,music_file=?,cover_image=?,gallery=?,access_password=?,is_active=?,accent_color=?,owner_email=?,owner_password=? WHERE id=?', [...$vals, $id]); }
+            else { q('INSERT INTO invitations (slug,template,groom,bride,message,music_url,music_file,cover_image,gallery,access_password,is_active,accent_color,owner_email,owner_password) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)', $vals); $id = (int)$pdo->lastInsertId(); }
             q('DELETE FROM events WHERE invitation_id=?', [$id]);
             foreach ($evs as $o => $ev) q('INSERT INTO events (invitation_id,title,event_at,venue,address,map_url,sort_order) VALUES (?,?,?,?,?,?,?)', [$id, $ev[0], $ev[1], $ev[2], $ev[3], $ev[4], $o]);
             $pdo->commit();
@@ -79,7 +83,13 @@ admin_header($id ? 'تعديل دعوة' : 'دعوة جديدة'); ?>
 <h3>الصور والموسيقى</h3>
 <div class="grid">
 <label>صورة الغلاف <input type="file" name="cover" accept="image/jpeg,image/png,image/webp"></label>
-<label>رابط موسيقى (mp3 مباشر — بترخيص مناسب) <input name="music_url" value="<?= $v('music_url') ?>" placeholder="https://..."></label></div>
+<label>رابط موسيقى (YouTube أو أي رابط mp3 مباشر) <input name="music_url" value="<?= $v('music_url') ?>" placeholder="https://youtu.be/... أو https://.../song.mp3"></label></div>
+<div class="card" style="background:#faf6ee;box-shadow:none;border:1px dashed #cbbf9f;margin:8px 0">
+<label>أو ارفع الأغنية كملف (mp3 / m4a / aac / ogg / wav — لحد 20 ميجا، وبتغلب على الرابط)
+<input type="file" name="music" accept="audio/*,.mp3,.m4a,.aac,.ogg,.wav"></label>
+<?php if (!empty($inv['music_file'])): ?><audio controls preload="none" src="<?= e(url('uploads/' . $inv['music_file'])) ?>" style="width:100%;margin-top:8px"></audio>
+<label style="font-weight:400"><input type="checkbox" name="remove_music" value="1" style="display:inline;width:auto"> حذف الأغنية المرفوعة</label><?php endif; ?>
+<small class="muted">لو الأغنية كبيرة وماترفعتش: زوّد <code>upload_max_filesize</code> و<code>post_max_size</code> من إعدادات PHP في الاستضافة، أو استخدم رابط.</small></div>
 <?php if (!empty($inv['cover_image'])): ?><div class="thumbs"><img src="<?= url('uploads/' . $inv['cover_image']) ?>" alt=""></div><?php endif; ?>
 <label>معرض الصور (لحد 12) <input type="file" name="gallery[]" multiple accept="image/jpeg,image/png,image/webp"></label>
 <div class="thumbs"><?php foreach ($gallery as $g): ?><label style="display:inline-block"><img src="<?= url('uploads/' . $g) ?>" alt=""><br><input type="checkbox" name="remove_img[]" value="<?= e($g) ?>" style="display:inline;width:auto"> حذف</label><?php endforeach; ?></div>

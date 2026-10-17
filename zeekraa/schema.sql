@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS invitations (
   bride VARCHAR(120) NOT NULL,
   message TEXT NULL,
   music_url VARCHAR(500) NULL,
+  music_file VARCHAR(255) NULL,
   cover_image VARCHAR(255) NULL,
   gallery TEXT NULL,
   access_password VARCHAR(255) NULL,

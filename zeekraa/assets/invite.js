@@ -2,7 +2,21 @@
   window.__inviteReady=true;
   var $=function(i){return document.getElementById(i)},body=document.body,
       reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
-  var a=$('bg'),b=$('mus'),intro=$('intro');
+  var a=$('bg'),b=$('mus'),intro=$('intro'),yt=$('yt');
+  // مشغّل الموسيقى: ملف/رابط صوت (audio) أو يوتيوب (iframe مخفي)
+  var ytp=null,ytReady=false,ytWant=false,M={on:false,
+    set:function(v){M.on=v;if(b)b.classList.toggle('on',v)},
+    play:function(){
+      if(a){var p=a.play();if(p&&p.then)p.then(function(){M.set(true)},function(){M.set(false)});else M.set(true)}
+      else if(yt){ytWant=true;if(ytp&&ytReady){ytp.playVideo();M.set(true)}else if(!ytp)M.load()}},
+    pause:function(){ytWant=false;if(a)a.pause();else if(ytp&&ytReady)ytp.pauseVideo();M.set(false)},
+    load:function(){
+      window.onYouTubeIframeAPIReady=function(){var id=yt.dataset.id;
+        ytp=new YT.Player('ytp',{videoId:id,playerVars:{autoplay:1,loop:1,playlist:id,controls:0,playsinline:1,rel:0,modestbranding:1},
+          events:{onReady:function(e){ytReady=true;if(ytWant){e.target.playVideo();M.set(true)}},
+            onStateChange:function(e){if(e.data===0)e.target.playVideo();if(e.data===1)M.set(true);if(e.data===2)M.set(false)},
+            onError:function(){M.set(false)}}})};
+      var s=document.createElement('script');s.src='https://www.youtube.com/iframe_api';document.head.appendChild(s)}};
 
   // جزيئات متساقطة (بتلات/قلوب/نجوم حسب التصميم)
   var fx=$('fx');
@@ -18,7 +32,7 @@
   function openIntro(){
     if(!intro||intro.classList.contains('open'))return;
     intro.classList.add('open');setTimeout(start,reduce?0:450);
-    if(a){a.play().then(function(){b&&b.classList.add('on')}).catch(function(){});}
+    M.play();
     try{sessionStorage.setItem('opened'+location.pathname,'1')}catch(e){}
   }
   var seen=false;try{seen=sessionStorage.getItem('opened'+location.pathname)==='1'}catch(e){}
@@ -33,7 +47,7 @@
       setTimeout(tick,1000)})();}
 
   // زرار الموسيقى
-  if(a&&b)b.onclick=function(){if(a.paused){a.play();b.classList.add('on')}else{a.pause();b.classList.remove('on')}};
+  if(b)b.onclick=function(){M.on?M.pause():M.play()};
 
   // الكشف عند التمرير + تتابع الصور
   var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.15});

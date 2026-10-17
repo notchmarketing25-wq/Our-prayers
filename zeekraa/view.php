@@ -1,5 +1,5 @@
 <?php
-require __DIR__ . '/lib/bootstrap.php'; require __DIR__ . '/lib/themes.php';
+require __DIR__ . '/lib/bootstrap.php'; require __DIR__ . '/lib/themes.php'; require __DIR__ . '/lib/music.php';
 $slug = $_GET['slug'] ?? '';
 $inv = q('SELECT * FROM invitations WHERE slug=? AND is_active=1', [$slug])->fetch();
 if (!$inv) { http_response_code(404); exit('<!doctype html><meta charset="utf-8"><body dir="rtl" style="font-family:sans-serif;text-align:center;padding:4rem">الدعوة غير موجودة.'); }
@@ -98,6 +98,6 @@ setTimeout(function(){if(i.className.indexOf('open')<0&&!window.__inviteReady){i
 
 <div class="lb" id="lb" hidden><button class="lb-x" id="lbX" aria-label="إغلاق">✕</button><button class="lb-n" id="lbN" aria-label="التالي">‹</button><img id="lbImg" alt=""><button class="lb-p" id="lbP" aria-label="السابق">›</button></div>
 <footer><p><?= $names ?></p><p class="credit">اعمل دعوتك من <a href="<?= e(url()) ?>"><?= e(cfg('site_name')) ?></a></p></footer>
-<?php if ($safe = safe_url($inv['music_url'])): ?><audio id="bg" src="<?= e($safe) ?>" loop preload="none"></audio><button id="mus" class="mus" aria-label="موسيقى">♪</button><?php endif; ?>
+<?php if ($music = music_source($inv)): ?><?php if ($music['type'] === 'youtube'): ?><div id="yt" data-id="<?= e($music['id']) ?>" style="position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;left:-10px;bottom:0;overflow:hidden"><div id="ytp"></div></div><?php else: ?><audio id="bg" src="<?= e($music['src']) ?>" loop preload="none"></audio><?php endif; ?><button id="mus" class="mus" aria-label="موسيقى">♪</button><?php endif; ?>
 <script src="<?= asset('assets/invite.js') ?>"></script>
 </body></html>
