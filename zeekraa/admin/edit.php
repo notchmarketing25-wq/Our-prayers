@@ -78,9 +78,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 isset(HEADER_DECORS[$_POST['header_decor'] ?? '']) ? $_POST['header_decor'] : 'floral',
                 (!empty($_POST['use_header_color']) && preg_match('/^#[0-9a-fA-F]{6}$/', $_POST['header_color'] ?? '')) ? strtolower($_POST['header_color']) : null,
                 implode(',', array_values(array_intersect((array)($_POST['hide_part'] ?? []), array_keys(HERO_PARTS)))) ?: null,
-                !empty($_POST['caption_frame']) ? 1 : 0];
-            if ($inv) { q('UPDATE invitations SET slug=?,template=?,groom=?,bride=?,message=?,music_url=?,music_file=?,cover_image=?,gallery=?,access_password=?,is_active=?,accent_color=?,owner_email=?,owner_password=?,lang=?,cover_preset=?,intro_title=?,intro_text=?,photo_caption=?,caption_pos=?,notes=?,events_title=?,titles=?,caption_style=?,caption_color=?,caption_size=?,page_title=?,page_desc=?,header_style=?,header_decor=?,header_color=?,hero_hide=?,caption_frame=? WHERE id=?', [...$vals, $id]); }
-            else { q('INSERT INTO invitations (slug,template,groom,bride,message,music_url,music_file,cover_image,gallery,access_password,is_active,accent_color,owner_email,owner_password,lang,cover_preset,intro_title,intro_text,photo_caption,caption_pos,notes,events_title,titles,caption_style,caption_color,caption_size,page_title,page_desc,header_style,header_decor,header_color,hero_hide,caption_frame) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', $vals); $id = (int)$pdo->lastInsertId(); }
+                !empty($_POST['caption_frame']) ? 1 : 0,
+                !empty($_POST['show_party']) ? 1 : 0];
+            if ($inv) { q('UPDATE invitations SET slug=?,template=?,groom=?,bride=?,message=?,music_url=?,music_file=?,cover_image=?,gallery=?,access_password=?,is_active=?,accent_color=?,owner_email=?,owner_password=?,lang=?,cover_preset=?,intro_title=?,intro_text=?,photo_caption=?,caption_pos=?,notes=?,events_title=?,titles=?,caption_style=?,caption_color=?,caption_size=?,page_title=?,page_desc=?,header_style=?,header_decor=?,header_color=?,hero_hide=?,caption_frame=?,show_party=? WHERE id=?', [...$vals, $id]); }
+            else { q('INSERT INTO invitations (slug,template,groom,bride,message,music_url,music_file,cover_image,gallery,access_password,is_active,accent_color,owner_email,owner_password,lang,cover_preset,intro_title,intro_text,photo_caption,caption_pos,notes,events_title,titles,caption_style,caption_color,caption_size,page_title,page_desc,header_style,header_decor,header_color,hero_hide,caption_frame,show_party) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', $vals); $id = (int)$pdo->lastInsertId(); }
             q('DELETE FROM events WHERE invitation_id=?', [$id]);
             foreach ($evs as $o => $ev) q('INSERT INTO events (invitation_id,title,event_at,venue,address,map_url,note,sort_order) VALUES (?,?,?,?,?,?,?,?)', [$id, $ev[0], $ev[1], $ev[2], $ev[3], $ev[4], $ev[5] ?: null, $o]);
             $pdo->commit();
@@ -182,6 +183,8 @@ admin_header($id ? 'تعديل دعوة' : 'دعوة جديدة'); ?>
 <div class="grid"><label>إيميل العميل <input type="email" name="owner_email" value="<?= $v('owner_email') ?>" autocomplete="off"></label>
 <label>كلمة سر اللوحة <input name="owner_password" id="opw" autocomplete="off" placeholder="<?= !empty($inv['owner_password']) ? 'محفوظة — اكتب جديدة للتغيير' : '6 حروف على الأقل' ?>">
 <button type="button" class="btn sm sec" style="margin-top:6px" onclick="document.getElementById('opw').value=Math.random().toString(36).slice(2,6)+Math.random().toString(36).slice(2,6)">توليد كلمة سر</button></label></div>
+<h3>تأكيد الحضور (RSVP)</h3>
+<label style="font-weight:400"><input type="checkbox" name="show_party" value="1" style="display:inline;width:auto" <?= !isset($inv['show_party']) || (int)$inv['show_party'] === 1 ? 'checked' : '' ?>> إظهار خانة "عدد الأفراد" في فورم تأكيد الحضور<br><small class="muted">لو شلتها، الضيف اللي معاه لينك خاص بيتحسب بأقصى عدد محدد له، والضيف العادي بيتحسب فرد واحد.</small></label>
 <h3>الخصوصية</h3>
 <div class="grid">
 <label>كلمة سر للدعوة (اختياري) <input name="access_password" type="password" autocomplete="new-password" placeholder="<?= !empty($inv['access_password']) ? 'محفوظة — اكتب جديدة للتغيير' : '' ?>"></label>

@@ -8,8 +8,10 @@
     $$('.pane').forEach(function(p){p.classList.toggle('on',p.id===id)});$$('.tab').forEach(function(b){b.classList.toggle('on',b.dataset.t===id)});}
   $$('.tab').forEach(function(b){b.onclick=function(){tab(b.dataset.t);history.replaceState(null,'','#'+b.dataset.t)}});
   tab(location.hash.slice(1));
+  // الوضع الداكن
+  var th=document.getElementById('theme');if(th)th.onclick=function(){var n=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=n;try{localStorage.setItem('pt',n)}catch(e){}};
   // نسخ
-  function copy(txt,btn){var done=function(){var o=btn.textContent;btn.textContent='تم النسخ ✓';setTimeout(function(){btn.textContent=o},1500)};
+  function copy(txt,btn){var done=function(){var o=btn.lastChild.textContent;btn.lastChild.textContent='تم النسخ ✓';setTimeout(function(){btn.lastChild.textContent=o},1500)};
     if(navigator.clipboard)navigator.clipboard.writeText(txt).then(done,function(){fb()});else fb();
     function fb(){var i=document.createElement('input');i.value=txt;document.body.appendChild(i);i.select();document.execCommand('copy');i.remove();done()}}
   var c=document.getElementById('copy');if(c)c.onclick=function(){copy(document.getElementById('lnk').value,c)};

@@ -112,7 +112,7 @@ setTimeout(function(){if(i.className.indexOf('open')<0&&!window.__inviteReady){i
 <input type="hidden" name="slug" value="<?= e($inv['slug']) ?>"><input type="hidden" name="g" value="<?= e($guest['token'] ?? '') ?>">
 <?php if (!$guest): ?><input name="name" placeholder="<?= e($T('name')) ?>" required maxlength="120"><input name="phone" placeholder="<?= e($T('phone')) ?>" inputmode="tel" maxlength="30"><?php endif; ?>
 <div class="choice"><label><input type="radio" name="attending" value="1" checked> <?= e($T('attend')) ?></label><label><input type="radio" name="attending" value="0"> <?= e($T('decline')) ?></label></div>
-<label class="ps"><?= e($T('party')) ?> <input type="number" name="party_size" min="1" max="<?= $guest ? (int)$guest['max_guests'] : 10 ?>" value="<?= $mine ? max(1, (int)$mine['party_size']) : 1 ?>"></label>
+<?php if (!isset($inv['show_party']) || (int)$inv['show_party'] === 1): ?><label class="ps"><?= e($T('party')) ?> <input type="number" name="party_size" min="1" max="<?= $guest ? (int)$guest['max_guests'] : 10 ?>" value="<?= $mine ? max(1, (int)$mine['party_size']) : 1 ?>"></label><?php endif; ?>
 <input name="note" placeholder="<?= e($T('note')) ?>" maxlength="500">
 <button class="btn-i"><?= e($T('send')) ?></button></form></section>
 

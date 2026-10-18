@@ -5,7 +5,7 @@ function admin_header(string $title): void { ?>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap">
 <link rel="stylesheet" href="<?= asset('assets/admin.css') ?>"></head><body>
 <header class="top"><div class="wrap"><strong><?= e(cfg('site_name')) ?></strong>
-<nav><a href="<?= url('admin/') ?>">الدعوات</a><a href="<?= url('admin/edit.php') ?>">+ دعوة جديدة</a><a href="<?= url('admin/logout.php') ?>">خروج</a></nav></div></header>
+<nav><a href="<?= url('admin/') ?>">الدعوات</a><a href="<?= url('admin/edit.php') ?>" class="cta">+ دعوة جديدة</a><a href="<?= url('admin/logout.php') ?>">خروج</a></nav></div></header>
 <main class="wrap"><?php if ($m = flash()): ?><div class="ok-msg"><?= e($m) ?></div><?php endif;
 }
 function admin_footer(): void { echo '</main></body></html>'; }

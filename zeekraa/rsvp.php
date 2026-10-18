@@ -8,7 +8,9 @@ $L = inv_lang($inv); $guest = null;
 if (!empty($_POST['g'])) $guest = q('SELECT * FROM guests WHERE token=? AND invitation_id=?', [$_POST['g'], $inv['id']])->fetch() ?: null;
 $name = trim($_POST['name'] ?? ''); $att = ($_POST['attending'] ?? '') === '1' ? 1 : 0;
 $max = $guest ? (int)$guest['max_guests'] : 10;
-$size = $att ? max(1, min($max, (int)($_POST['party_size'] ?? 1))) : 0;
+$showParty = !isset($inv['show_party']) || (int)$inv['show_party'] === 1;
+// لو خانة العدد مخفية: الضيف بلينك خاص = أقصى عدد محدد له، وغير كده فرد واحد
+$size = !$att ? 0 : ($showParty ? max(1, min($max, (int)($_POST['party_size'] ?? 1))) : ($guest ? max(1, (int)$guest['max_guests']) : 1));
 if ($guest) $name = $guest['name'];
 $back = url($slug) . ($guest ? '?g=' . $guest['token'] : '');
 if ($name === '') { flash(tr('need_name', $L)); redirect($back . '#rsvp'); }
